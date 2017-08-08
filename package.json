@@ -1,0 +1,28 @@
+{
+  "name": "react-falcor-graph",
+  "version": "1.0.0",
+  "description": "React-Falcor bindings for declarative data fetching",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jameslaneconkling/react-falcor-graph.git"
+  },
+  "keywords": [
+    "react",
+    "falcor",
+    "graph"
+  ],
+  "author": "jameslaneconkling",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jameslaneconkling/react-falcor-graph/issues"
+  },
+  "homepage": "https://github.com/jameslaneconkling/react-falcor-graph#readme",
+  "dependencies": {
+    "recompose": "^0.24.0",
+    "rxjs": "^5.4.2"
+  }
+}
