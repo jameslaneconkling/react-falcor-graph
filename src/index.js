@@ -1,1 +1,1 @@
-export { default } from './connect';
+export { default, connectFalcorStream } from './connect';
