@@ -4,8 +4,9 @@
   "description": "React-Falcor bindings for declarative data fetching",
   "main": "dist/index.js",
   "scripts": {
-    "test": "node test/",
-    "perf": "node test/perf/"
+    "test": "node test",
+    "perf": "node test/perf",
+    "lint": "eslint ./src"
   },
   "repository": {
     "type": "git",
@@ -34,6 +35,7 @@
     "babel-preset-react": "^6.24.1",
     "babel-register": "^6.24.1",
     "benchmark": "^2.1.4",
+    "eslint": "^4.4.1",
     "falcor": "^0.1.17",
     "ramda": "^0.24.1",
     "react": "^15.6.1",
