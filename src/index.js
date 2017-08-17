@@ -1,1 +1,2 @@
-export { default, connectFalcorStream } from './connect';
+exports.default = require('./connect');
+exports.connectFalcorStream = require('./connect').connectFalcorStream;

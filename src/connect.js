@@ -1,24 +1,29 @@
 /* eslint-disable max-len, no-underscore-dangle */
-import hoistStatics           from 'recompose/hoistStatics';
-import compose                from 'recompose/compose';
-import setDisplayName         from 'recompose/setDisplayName';
-import wrapDisplayName        from 'recompose/wrapDisplayName';
-import mapPropsStream         from 'recompose/mapPropsStream';
-import { Observable }         from 'rxjs/Observable';
-import                             'rxjs/add/observable/from';
-import                             'rxjs/add/operator/distinctUntilChanged';
-import                             'rxjs/add/operator/merge';
-import                             'rxjs/add/operator/withLatestFrom';
-import                             'rxjs/add/operator/let';
-import                             'rxjs/add/operator/switchMap';
-import                             'rxjs/add/operator/startWith';
-import                             'rxjs/add/operator/map';
-import                             'rxjs/add/operator/last';
-import                             'rxjs/add/operator/catch';
-import                             'rxjs/add/operator/auditTime';
-
-import                             'rxjs/add/operator/delay';
-import { animationFrame }     from 'rxjs/scheduler/animationFrame';
+const {
+  hoistStatics,
+  compose,
+  setDisplayName,
+  wrapDisplayName,
+  mapPropsStream
+} = require('recompose');
+const {
+  Observable
+} = require('rxjs/Observable');
+require('rxjs/add/observable/from');
+require('rxjs/add/operator/distinctUntilChanged');
+require('rxjs/add/operator/merge');
+require('rxjs/add/operator/withLatestFrom');
+require('rxjs/add/operator/let');
+require('rxjs/add/operator/switchMap');
+require('rxjs/add/operator/startWith');
+require('rxjs/add/operator/map');
+require('rxjs/add/operator/last');
+require('rxjs/add/operator/catch');
+require('rxjs/add/operator/auditTime');
+require('rxjs/add/operator/delay');
+var {
+  animationFrame
+} = require('rxjs/scheduler/animationFrame');
 
 
 /**
@@ -27,12 +32,12 @@ import { animationFrame }     from 'rxjs/scheduler/animationFrame';
  * @param {Observable<>} change$
  * @param {Object} options
  */
-export const connectFalcorStream = (
+const connectFalcorStream = exports.connectFalcorStream = (
   paths,
   falcorModel,
   change$,
   {
-    errorHandler = (props, error) => Observable.of({ ...props, graphFragment: {}, graphFragmentStatus: 'error', error }),
+    errorHandler = (props, error) => Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'error', error })),
     prefixStream = props$ => props$
   } = {}
 ) => {
@@ -52,7 +57,7 @@ export const connectFalcorStream = (
         const _paths = typeof paths === 'function' ? paths(props) : paths;
 
         if (_paths === null) {
-          return Observable.of({ ...props, graphFragment: {}, graphFragmentStatus: 'complete' });
+          return Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'complete' }));
         }
 
         let model;
@@ -74,8 +79,8 @@ export const connectFalcorStream = (
       });
 
     return _props$
-      .map(props => ({ ...props, graphFragment: {}, graphFragmentStatus: 'next' }))
-      .merge(graphQueryResponse$.withLatestFrom(_props$, (graphQuery, props) => ({ ...props, ...graphQuery })))
+      .map(props => Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'next' }))
+      .merge(graphQueryResponse$.withLatestFrom(_props$, (graphQuery, props) => Object.assign({}, props, graphQuery)))
       .auditTime(0, animationFrame);
   };
 };
@@ -87,7 +92,7 @@ export const connectFalcorStream = (
  * @param {Observable<>} change$
  * @param {Object} options
  */
-export default (paths, falcorModel, change$, options) => WrappedComponent =>
+exports.default = (paths, falcorModel, change$, options) => WrappedComponent =>
   hoistStatics(compose(
     setDisplayName(wrapDisplayName(WrappedComponent, 'FalcorConnect')),
     mapPropsStream(connectFalcorStream(paths, falcorModel, change$, options))
