@@ -64,7 +64,7 @@ test('Should emit next and complete status for path to remote graph fragment', (
   ];
 
 
-  withGraphFragment(paths, model, change$)(Observable.of({ id: 0 }))
+  withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 0 }))
     .subscribe(tapeResultObserver(t)(expectedResults));
 });
 
@@ -100,7 +100,7 @@ test('Should emit complete graphFragment for path in cache', (t) => {
   ];
 
 
-  withGraphFragment(paths, model, change$)(Observable.of({ id: 0 }))
+  withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 0 }))
     .subscribe(tapeResultObserver(t)(expectedResults));
 });
 
@@ -157,7 +157,7 @@ test('Should emit progressively for query in local cache and remote service', (t
   ];
 
 
-  withGraphFragment(paths, model, change$)(Observable.of({ id: 2 }))
+  withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 2 }))
     .subscribe(tapeResultObserver(t)(expectedResults));
 });
 
@@ -193,7 +193,7 @@ test('Should handle paths passed as array', (t) => {
   ];
 
 
-  withGraphFragment(paths, model, change$)(Observable.of({ id: 0 }))
+  withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 0 }))
     .subscribe(tapeResultObserver(t)(expectedResults));
 });
 
@@ -221,7 +221,7 @@ test('Should handle null paths', (t) => {
   ];
 
 
-  withGraphFragment(paths, model, change$)(Observable.never().startWith({ id: 0 }))
+  withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.never().startWith({ id: 0 }))
     .subscribe(tapeResultObserver(t)(expectedResults));
 });
 
@@ -273,7 +273,7 @@ test('Should emit when props change', (t) => {
     }
   ];
 
-  withGraphFragment(paths, model, change$)(
+  withGraphFragment(paths, model, change$, { auditTime: 10 })(
     Observable.of({ id: 0, some: 'thing' }).concat(
       Observable.of({ id: 0, some: 'other thing' }).delay(200)
     )
@@ -336,7 +336,7 @@ test('Should emit when props change before request resolves', (t) => {
     }
   ];
 
-  withGraphFragment(paths, model, change$)(
+  withGraphFragment(paths, model, change$, { auditTime: 10 })(
     Observable.of({ id: 0, some: 'thing' }).concat(
       Observable.of({ id: 0, some: 'other thing' }).delay(50)
     )
@@ -424,7 +424,7 @@ test('Should emit progressively when datasource streams multiple parts of respon
     },
   ];
 
-  withGraphFragment(paths, model, change$)(Observable.of({}))
+  withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({}))
     .subscribe(tapeResultObserver(t)(expectedResults));
 });
 
@@ -500,7 +500,7 @@ test('Should detect changes to the graph', (t) => {
       .subscribe();
   }, 100);
 
-  withGraphFragment(paths, model, change$)(Observable.of({ id: 0 }))
+  withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 0 }))
     .subscribe(tapeResultObserver(t)(expectedResults));
 });
 
@@ -548,7 +548,7 @@ test('Should handle queries whose nodes expire immediately', (t) => {
   ];
 
 
-  withGraphFragment(paths, model, change$)(Observable.of({ id: 0 }))
+  withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 0 }))
     .subscribe(tapeResultObserver(t)(expectedResults));
 });
 
@@ -714,7 +714,7 @@ test('Should emit single error', (t) => {
   ];
 
 
-  withGraphFragment(paths, model, change$)(Observable.of({ id: 0 }))
+  withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 0 }))
     .subscribe(tapeResultObserver(t)(expectedResults));
 });
 
@@ -774,10 +774,10 @@ test('Emits errors to all requests when batched request returns an error', (t) =
     }
   ];
 
-  withGraphFragment(paths, model, change$)(Observable.of({ id: 0 }))
+  withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 0 }))
     .subscribe(tapeResultObserver(t)(expectedResults0));
 
-  withGraphFragment(paths, model, change$)(Observable.of({ id: 1 }))
+  withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 1 }))
     .subscribe(tapeResultObserver(t)(expectedResults1));
 });
 

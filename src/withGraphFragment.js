@@ -16,7 +16,7 @@ require('rxjs/add/operator/auditTime');
 
 
 /**
- * @param {(props) => paths | paths} paths
+ * @param {(props) => paths | paths | null | Error} paths
  * @param {Object} falcorModel
  * @param {Observable<>} graphChange$
  * @param {Object} options
@@ -28,7 +28,7 @@ exports.default = (
   {
     errorHandler = error => Observable.of({ graphFragment: {}, graphFragmentStatus: 'error', error }),
     prefixStream = props$ => props$,
-    scheduleTimer = 0
+    auditTime = 0
   } = {}
 ) => {
   const _models = {};
@@ -72,7 +72,7 @@ exports.default = (
     return props$
       .map(props => Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'next' }))
       .merge(graphQueryResponse$.withLatestFrom(props$, (response, props) => Object.assign({}, props, response)))
-      .auditTime(scheduleTimer);
+      .auditTime(auditTime);
 
     // Note - the more straightforward use of combineLatest fails when props$ fires rapidly
     // a situation with no test case yet
