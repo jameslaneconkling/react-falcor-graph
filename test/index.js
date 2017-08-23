@@ -1,1 +1,2 @@
-require('./connectFalcorStream');
+require('./withGraphFragment');
+// require('./model');

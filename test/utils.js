@@ -1,20 +1,22 @@
 const R = require('ramda');
-const createEventHandler = require('recompose').createEventHandler;
+const {
+  createEventHandler
+} = require('recompose');
 
 
-const createCache = () => ({
-  items: R.range(0, 99)
+const createItemsCache = exports.createItemsCache = (length) => ({
+  items: R.range(0, length - 1)
     .reduce((items, idx) => (
       Object.assign(items, { [idx]: { $type: 'ref', value: ['item', `_${idx}`] } })
-    ), { length: { $type: 'atom', value: 100 } }),
-  item: R.range(0, 99)
+    ), { length: { $type: 'atom', value: length } }),
+  item: R.range(0, length - 1)
     .reduce((item, idx) => (
       Object.assign(item, { [`_${idx}`]: { title: { $type: 'atom', value: `Item ${idx}` } } })
     ), {})
 });
 
-const createFalcorModel = (
-  Model, { recycleJSON = true, cache = createCache() } = {}
+exports.createFalcorModel = (
+  Model, { recycleJSON = true, cache = createItemsCache(100) } = {}
 ) => {
   const {
     stream: change$,
@@ -30,30 +32,31 @@ const createFalcorModel = (
   return { model, change$ };
 };
 
-const tapeResultObserver = (t) => {
+exports.tapeResultObserver = (t) => {
   let idx = -1;
 
-  return (expectedResults) => {
-    idx += 1;
-
-    return {
-      next(props) {
-        if (expectedResults[idx]) {
-          t.deepEqual(props, expectedResults[idx]);
-        } else {
-          t.fail(`Test emitted more than expected ${expectedResults.length} times`);
-        }
-      },
-      error(err) {
-        t.fail(err);
-      },
-      complete() {
-        t.end();
+  return (expectedResults) => ({
+    next(props) {
+      idx += 1;
+      if (expectedResults[idx]) {
+        t.deepEqual(props, expectedResults[idx], `emission ${idx} should match expected output`);
+      } else {
+        t.fail(`test emitted more than expected ${expectedResults.length} times: \n${JSON.stringify(props)}`);
       }
-    };
-  };
+    },
+    error(err) {
+      console.log('shouldnt run', err);
+      // t.fail(`test emitted error ${JSON.stringify(err)}`);
+    }
+  });
 };
 
-module.exports.createCache = createCache;
-module.exports.createFalcorModel = createFalcorModel;
-module.exports.tapeResultObserver = tapeResultObserver;
+exports.onlyCalledNTimes = n => {
+  let i = 1;
+  return (t) => {
+    if (i > n) {
+      t.fail(`test ran more than ${n} times`);
+    }
+    i += 1;
+  };
+};
