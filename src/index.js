@@ -1,2 +1,2 @@
-exports.default = require('./connect');
-exports.withGraphFragment = require('./connect').withGraphFragment;
+exports.default = require('./connect').default;
+exports.withGraphFragment = require('./withGraphFragment').default;
