@@ -16,10 +16,12 @@ require('rxjs/add/operator/auditTime');
 
 
 /**
- * @param {(props) => paths | paths | null | Error} paths
+ * @param {props -> paths | paths | null | Error} paths
  * @param {Object} falcorModel
  * @param {Observable<>} graphChange$
  * @param {Object} options
+ *
+ * @returns {Observable<props> -> Observable<props>}
  */
 exports.default = (
   paths,
