@@ -10,35 +10,33 @@ const {
   Observable
 } = require('rxjs/Observable');
 require('rxjs/add/observable/from');
-require('rxjs/add/operator/distinctUntilChanged');
-require('rxjs/add/operator/merge');
+require('rxjs/add/observable/empty');
 require('rxjs/add/operator/withLatestFrom');
+require('rxjs/add/operator/last');
+require('rxjs/add/operator/merge');
+require('rxjs/add/operator/repeatWhen');
 require('rxjs/add/operator/let');
 require('rxjs/add/operator/switchMap');
 require('rxjs/add/operator/startWith');
 require('rxjs/add/operator/map');
-require('rxjs/add/operator/last');
 require('rxjs/add/operator/catch');
 require('rxjs/add/operator/auditTime');
-require('rxjs/add/operator/delay');
-var {
-  animationFrame
-} = require('rxjs/scheduler/animationFrame');
 
 
 /**
  * @param {(props) => paths | paths} paths
  * @param {Object} falcorModel
- * @param {Observable<>} change$
+ * @param {Observable<>} graphChange$
  * @param {Object} options
  */
-const connectFalcorStream = exports.connectFalcorStream = (
+const withGraphFragment = exports.withGraphFragment = (
   paths,
   falcorModel,
-  change$,
+  graphChange$,
   {
-    errorHandler = (props, error) => Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'error', error })),
-    prefixStream = props$ => props$
+    errorHandler = error => Observable.of({ graphFragment: {}, graphFragmentStatus: 'error', error }),
+    prefixStream = props$ => props$,
+    scheduleTimer = 0
   } = {}
 ) => {
   const _models = {};
@@ -47,17 +45,14 @@ const connectFalcorStream = exports.connectFalcorStream = (
     const _props$ = Observable.from(props$);
 
     const graphQueryResponse$ = _props$
-      // .distinctUntilChanged((prev, next) => equals(
-      //   typeof paths === 'function' ? paths(prev) : paths,
-      //   typeof paths === 'function' ? paths(next) : paths
-      // ))
-      .merge(Observable.from(change$).withLatestFrom(_props$, (_, props) => props))
       .let(prefixStream)
       .switchMap((props) => {
         const _paths = typeof paths === 'function' ? paths(props) : paths;
 
-        if (_paths === null) {
+        if (!_paths) {
           return Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'complete' }));
+        } else if (paths instanceof Error) {
+          return Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'error', error: paths.message }));
         }
 
         let model;
@@ -72,16 +67,28 @@ const connectFalcorStream = exports.connectFalcorStream = (
         const graphQuery$ = Observable.from(model.get(..._paths).progressively());
 
         return graphQuery$
-          // .distinctUntilKeyChanged('version') or .distinctUntilChanged((prev, next) => prev.graphFrag)
           .map(graphFragment => ({ graphFragment, graphFragmentStatus: 'next' }))
-          .merge(graphQuery$.last().map(graphFragment => ({ graphFragment, graphFragmentStatus: 'complete' })))
-          .catch((err, caught) => errorHandler(props, err, caught));
+          .catch((err, caught) => errorHandler(err, props, caught))
+          .merge(graphQuery$
+            .last()
+            .map(graphFragment => ({ graphFragment, graphFragmentStatus: 'complete' }))
+            .catch(() => Observable.empty())
+          )
+          .repeatWhen(() => graphChange$);
       });
 
-    return _props$
+    return props$
       .map(props => Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'next' }))
-      .merge(graphQueryResponse$.withLatestFrom(_props$, (graphQuery, props) => Object.assign({}, props, graphQuery)))
-      .auditTime(0, animationFrame);
+      .merge(graphQueryResponse$.withLatestFrom(props$, (response, props) => Object.assign({}, props, response)))
+      .auditTime(scheduleTimer);
+
+    // Note - the more straightforward use of combineLatest fails when props$ fires rapidly
+    // a situation with no test case yet
+    // return Observable.combineLatest(
+    //   _props$,
+    //   graphQueryResponse$.startWith({ graphFragment: {}, graphFragmentStatus: 'next' }),
+    //   (props, graphQueryResponse) => Object.assign({}, props, graphQueryResponse)
+    // );
   };
 };
 
@@ -89,11 +96,11 @@ const connectFalcorStream = exports.connectFalcorStream = (
 /**
  * @param {(props) => paths | paths} paths
  * @param {Object} falcorModel
- * @param {Observable<>} change$
+ * @param {Observable<>} graphChange$
  * @param {Object} options
  */
-exports.default = (paths, falcorModel, change$, options) => WrappedComponent =>
+exports.default = (paths, falcorModel, graphChange$, options) => WrappedComponent =>
   hoistStatics(compose(
     setDisplayName(wrapDisplayName(WrappedComponent, 'FalcorConnect')),
-    mapPropsStream(connectFalcorStream(paths, falcorModel, change$, options))
+    mapPropsStream(withGraphFragment(paths, falcorModel, graphChange$, options))
   ))(WrappedComponent);

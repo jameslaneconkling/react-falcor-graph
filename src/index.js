@@ -1,2 +1,2 @@
 exports.default = require('./connect');
-exports.connectFalcorStream = require('./connect').connectFalcorStream;
+exports.withGraphFragment = require('./connect').withGraphFragment;

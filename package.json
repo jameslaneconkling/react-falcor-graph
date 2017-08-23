@@ -4,7 +4,7 @@
   "description": "React-Falcor bindings for declarative data fetching",
   "main": "dist/index.js",
   "scripts": {
-    "perf": "node test/perf",
+    "perf": "node --expose-gc test/perf",
     "test": "node test",
     "lint": "eslint ./src",
     "build": "babel src/ -d dist --source-maps",
@@ -27,7 +27,8 @@
   "homepage": "https://github.com/jameslaneconkling/react-falcor-graph#readme",
   "dependencies": {
     "recompose": "^0.24.0",
-    "rxjs": "^5.4.2"
+    "rxjs": "^5.4.2",
+    "symbol-observable": "^1.0.4"
   },
   "devDependencies": {
     "@graphistry/falcor": "^2.9.6",
