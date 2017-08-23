@@ -45,10 +45,10 @@ const TodosListContainer = compose(
 
 ## Redux Integration
 
-Because React Falcor makes no assumptions about the existence of additional state management frameworks, integrating with frameworks such as Redux is straightforward.  This can be useful if you choose not to store parts of your application state, such as view state, in the Falcor Graph.  For example, consider a paginated list:
+Because React Falcor makes no assumptions about the existence of additional state management frameworks, integrating with frameworks such as Redux is straightforward.  This can be useful if you choose not to store parts of your application state, such as view state, in the Falcor Graph, e.g. to implement a paginated list:
 
 ```javascript
-const TodosListContainer = compose(
+const PaginatedTodosListContainer = compose(
   connect(
     state => ({
       from: state.todos.from,
@@ -67,10 +67,12 @@ const TodosListContainer = compose(
     ...rest,
     todos: graphFragment.json ? graphFragment.json.todos : []
   }))
-)(TodosList);
+)(PaginatedTodosList);
 ```
 
-React Falcor also exposes `withFalcorGraph` and `withReduxStore` for interacting directly with a stream of props, you can implement a more efficient version of the above using `recompose/mapPropsStream`.  This approach applies the container composition over an observable stream, rather than over components, reducing the overhead from the creation of intermediary components.  For example, the above container (using `connect()`, `connectFalcor()`, and `mapProps()` HOCs), creates three components.  The following equivalent approach using Observable streams only creates one component.
+## Stream composition using `withFalcorGraph` and `withReduxStore`
+
+React Falcor also exposes `withFalcorGraph` and `withReduxStore` for interacting directly with a stream of props.  Paired with the `recompose/mapPropsStream` HOC, this approach composes observable streams, rather than components, reducing overhead from the creation of intermediary components.  For example, the above container (using `connect()`, `connectFalcor()`, and `mapProps()` HOCs), creates three components, while the following equivalent approach creates only one.
 
 ```javascript
 const mapProps = state => ({
