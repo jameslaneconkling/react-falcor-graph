@@ -1,45 +1,204 @@
+/* eslint-disable no-console */
+const $$observable = require('symbol-observable');
 const { Observable } = require('rxjs/Observable');
 require('rxjs/add/observable/of');
-require('rxjs/add/observable/interval');
 require('rxjs/add/operator/map');
-require('rxjs/add/operator/take');
 require('rxjs/add/operator/do');
 require('rxjs/add/operator/let');
-
+require('rxjs/add/operator/concat');
+require('rxjs/add/operator/filter');
+require('rxjs/add/operator/reduce');
+require('rxjs/add/operator/delay');
+require('rxjs/add/operator/repeat');
 const {
-  Model
+  Model: GraphistryModel
 } = require('@graphistry/falcor/dist/falcor.all.min');
-const { createFalcorModel } = require('../utils');
 const {
-  connectFalcorStream
+  Model: NetflixModel
+} = require('falcor/dist/falcor.browser.min');
+const {
+  createItemsCache
+} = require('../utils');
+const {
+  withGraphFragment
 } = require('../../src');
 
+if (!global.gc) {
+  console.warn('Manual garbage collection not enabled.  For more accurate results, please run script with the --expose-gc flag');
+}
 
-const createPerfTest = (recycleJSON) => {
-  const paths = ({ from, to }) => [['items', { from, to }, 'title']];
-  const { model, change$ } = createFalcorModel(Model, { recycleJSON });
-  const innerConnect = connectFalcorStream(paths, model, change$);
-  const props$ = Observable.of(
-    { id: 1, from: 0, to: 99 }
-  );
 
-  let t1;
+const createPerfTests = ([head, ...rest]) => {
+  if (head) {
+    console.log(head.name);
 
-  return () => {
-    props$
-      .do(() => t1 = new Date())
-      .let(props$ => innerConnect(props$))
-      .do(() => console.log('result', new Date() - t1))
-      .subscribe();
-  };
+    head.body()
+      // .do(({ t1, t2 }) => console.log(`\t${t2 - t1}ms`))
+      .repeat(head.options && head.options.iterations || 100)
+      .reduce(({ runningSum, count }, { t1, t2 }) => ({
+        runningSum: runningSum + (t2 - t1),
+        count: count + 1
+      }), { runningSum: 0, count: 0 })
+      .subscribe({
+        next: ({ runningSum, count }) => console.log(`\tAverage Time: ${Math.round((runningSum / count) * 10) / 10}ms\n`),
+        complete: () => {
+          typeof global.gc === 'function' && global.gc();
+          createPerfTests(rest);
+        }
+      });
+  }
 };
 
-const test = createPerfTest(false)();
-// for (let i = 0; i < 3; i += 1) {
-//   test();
-// }
 
-const testRecycled = createPerfTest(true)();
-// for (let i = 0; i < 3; i += 1) {
-//   testRecycled();
-// }
+createPerfTests([
+  {
+    name: 'Request Static Graph of 100 Paths',
+    body: () => {
+      const model = new GraphistryModel({
+        cache: createItemsCache(200),
+        recycleJSON: false
+      });
+
+      const paths = ({ from, to }) => [['items', { from, to }, 'title']];
+
+      const props$ = Observable.of({ id: 1, from: 0, to: 99 });
+
+      return props$
+        .map(props => Object.assign(props, { t1: new Date() }))
+        .let(props$ =>
+          withGraphFragment(paths, model, props$.delay(0))(props$)
+        )
+        .map(props => Object.assign(props, { t2: new Date() }));
+    }
+  },
+  {
+    name: 'Request Static Graph of 100 Paths [recycled]',
+    body: () => {
+      const model = new GraphistryModel({
+        cache: createItemsCache(200),
+        recycleJSON: true
+      });
+
+      const paths = ({ from, to }) => [['items', { from, to }, 'title']];
+
+      const props$ = Observable.of({ id: 1, from: 0, to: 99 });
+
+      return props$
+        .map(props => Object.assign(props, { t1: new Date() }))
+        .let(props$ =>
+          withGraphFragment(paths, model, props$.delay(0))(props$)
+        )
+        .map(props => Object.assign(props, { t2: new Date() }));
+    }
+  },
+  {
+    name: 'Request Static Graph of 100 Paths [Netflix]',
+    body: () => {
+      // wrap rxjs v4 observable in v5
+      const _model = new NetflixModel({
+        cache: createItemsCache(200),
+      });
+      const model = {
+        get: (...args) => ({
+          progressively: () => Observable.create(observer => (
+            _model.get(...args).progressively().subscribe({
+              onNext(data) { observer.next(data); },
+              onError(data) { observer.error(data); },
+              onCompleted(data) { observer.complete(data); }
+            })
+          ))
+        })
+      };
+
+      // const model = {
+      //   get: (...args) => ({
+      //     progressively: () => ({
+      //       subscribe(observer) {
+      //         const subscription = _model.get(...args)
+      //           .progressively()
+      //           .subscribe({
+      //             onNext(data) { observer.next(data); },
+      //             onError(data) { observer.error(data); },
+      //             onCompleted(data) { observer.complete(data); }
+      //           });
+
+      //         return {
+      //           unsubscribe: () => subscription.unsubscribe()
+      //         };
+      //       },
+      //       [$$observable]() {
+      //         return this;
+      //       }
+      //     })
+      //   })
+      // };
+
+      const paths = ({ from, to }) => [['items', { from, to }, 'title']];
+
+      const props$ = Observable.of({ id: 1, from: 0, to: 99 });
+
+      return props$
+        .map(props => Object.assign(props, { t1: new Date() }))
+        .let(props$ =>
+          withGraphFragment(paths, model, props$.delay(0))(props$)
+        )
+        .map(props => Object.assign(props, { t2: new Date() }));
+    }
+  },
+  {
+    name: 'Request Dynamic Graph of 100 Paths',
+    body: () => {
+      let tick = false;
+
+      const model = new GraphistryModel({
+        cache: createItemsCache(200),
+        recycleJSON: false
+      });
+
+      const paths = ({ from, to }) => [['items', { from, to }, 'title']];
+
+      const props$ = Observable.of(null)
+        .map(() => {
+          tick = !tick;
+          return tick ?
+            { id: 1, from: 0, to: 99 } :
+            { id: 2, from: 100, to: 199 };
+        });
+
+      return props$
+        .map(props => Object.assign(props, { t1: new Date() }))
+        .let(props$ =>
+          withGraphFragment(paths, model, props$.delay(0))(props$)
+        )
+        .map(props => Object.assign(props, { t2: new Date() }));
+    }
+  },
+  {
+    name: 'Request Dynamic Graph of 100 Paths [recycled]',
+    body: () => {
+      let tick = false;
+
+      const model = new GraphistryModel({
+        cache: createItemsCache(200),
+        recycleJSON: true
+      });
+
+      const paths = ({ from, to }) => [['items', { from, to }, 'title']];
+
+      const props$ = Observable.of(null)
+        .map(() => {
+          tick = !tick;
+          return tick ?
+            { id: 1, from: 0, to: 99 } :
+            { id: 2, from: 100, to: 199 };
+        });
+
+      return props$
+        .map(props => Object.assign(props, { t1: new Date() }))
+        .let(props$ =>
+          withGraphFragment(paths, model, props$.delay(0))(props$)
+        )
+        .map(props => Object.assign(props, { t2: new Date() }));
+    }
+  }
+]);

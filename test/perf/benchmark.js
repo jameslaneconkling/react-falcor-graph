@@ -9,7 +9,7 @@ const {
   Model
 } = require('@graphistry/falcor/dist/falcor.all.min');
 const { createFalcorModel } = require('../utils');
-const { connectFalcorStream } = require('../../src/');
+const { withGraphFragment } = require('../../src/');
 
 
 const createPerfTests = () => {
@@ -20,10 +20,10 @@ const createPerfTests = () => {
   const to = { 0: 49, 1: 99 };
   let id = 0;
 
-  const innerConnect1 = connectFalcorStream(paths, model, change$)(
+  const innerConnect1 = withGraphFragment(paths, model, change$)(
     Observable.of({ id: 0, from: 0, to: 49 })
   );
-  const innerConnect2 = connectFalcorStream(paths, model, change$)(
+  const innerConnect2 = withGraphFragment(paths, model, change$)(
     Observable.of({ id, from: from[id], to: to[id] })
   );
 
@@ -62,10 +62,10 @@ const createPerfTestsRecycled = () => {
   const to = { 0: 49, 1: 99 };
   let id = 0;
 
-  const innerConnect1 = connectFalcorStream(paths, model, change$)(
+  const innerConnect1 = withGraphFragment(paths, model, change$)(
     Observable.of({ id: 0, from: 0, to: 49 })
   );
-  const innerConnect2 = connectFalcorStream(paths, model, change$)(
+  const innerConnect2 = withGraphFragment(paths, model, change$)(
     Observable.of({ id, from: from[id], to: to[id] })
   );
 

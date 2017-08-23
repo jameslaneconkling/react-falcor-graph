@@ -1,4 +1,3 @@
-require('babel-register');
-require('./model');
-require('./benchmark');
-// require('./latency');
+// require('./model');
+// require('./benchmark');
+require('./latency');
