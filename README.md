@@ -112,7 +112,10 @@ const CreateNewTodoFormContainer = mapPropsStream(props$ => {
   const { handler: setInputFieldValue, stream: inputFieldValue$ } = createEventHandler();
 
   props$
-    .combineLatest(inputFieldValue$, (props, newTodoLabel) => ({ ...props, newTodoLabel }))
+    .combineLatest(
+      inputFieldValue$.startWith(''),
+      (props, newTodoLabel) => ({ ...props, newTodoLabel })
+    )
     .let(withReduxStore(mapProps, mapDispatch))
     .map(({ newTodoLabel, ...rest }) => ({
       ...rest,
