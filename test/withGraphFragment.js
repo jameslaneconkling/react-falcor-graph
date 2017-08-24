@@ -105,7 +105,7 @@ test('Should emit complete graphFragment for path in cache', (t) => {
 });
 
 
-test('Should emit progressively for query in local cache and remote service', (t) => {
+test.only('Should emit progressively for query in local cache and remote service', (t) => {
   t.plan(2);
   const {
     stream: change$,

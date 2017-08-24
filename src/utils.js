@@ -26,7 +26,7 @@ const expandPath = exports.expandPath = pathOrPathSet =>
   }, [[]]);
 
 
-exports.expandPaths = paths =>
+const expandPaths = exports.expandPaths = paths =>
   paths.reduce((expandedPaths, path) => [...expandedPaths, ...expandPath(path)], []);
 
 
@@ -42,4 +42,16 @@ const walkTree = exports.walkTree = (path, tree, graph = tree) => {
     return walkTree(path.slice(1), tree[path[0]], graph);
   }
   return undefined;
+};
+
+exports.allPathsInGraph = (paths, graph) => {
+  const expandedPaths = expandPaths(paths);
+
+  for (let i = 0; i < expandedPaths.length; i++) {
+    if (!walkTree(expandedPaths[i], graph)) {
+      return false;
+    }
+  }
+
+  return true;
 };

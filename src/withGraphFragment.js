@@ -3,6 +3,7 @@ const {
 } = require('rxjs/Observable');
 require('rxjs/add/observable/from');
 require('rxjs/add/observable/empty');
+require('rxjs/add/observable/combineLatest');
 require('rxjs/add/operator/withLatestFrom');
 require('rxjs/add/operator/last');
 require('rxjs/add/operator/merge');
@@ -13,6 +14,9 @@ require('rxjs/add/operator/startWith');
 require('rxjs/add/operator/map');
 require('rxjs/add/operator/catch');
 require('rxjs/add/operator/auditTime');
+const {
+  allPathsInGraph
+} = require('./utils');
 
 
 /**
@@ -29,18 +33,15 @@ exports.default = (
   graphChange$,
   {
     errorHandler = error => Observable.of({ graphFragment: {}, graphFragmentStatus: 'error', error }),
-    prefixStream = props$ => props$,
-    auditTime = 0
+    // prefixStream = props$ => props$
   } = {}
 ) => {
   const _models = {};
 
   return (props$) => {
-    const _props$ = Observable.from(props$);
-
-    const graphQueryResponse$ = _props$
-      .let(prefixStream)
-      .switchMap((props) => {
+    return Observable.from(props$)
+      // .let(prefixStream) // ???
+      .switchMap(props => {
         const _paths = typeof paths === 'function' ? paths(props) : paths;
 
         if (!_paths) {
@@ -58,30 +59,25 @@ exports.default = (
           model = _models[props.id];
         }
 
+        const { jsonGraph } = falcorModel.getCache(..._paths);
+
+        if (allPathsInGraph(_paths, jsonGraph)) {
+          return model.get(..._paths).progressively()
+            .map(graphFragment => Object.assign({}, props, { graphFragment, graphFragmentStatus: 'complete' }));
+        }
+
         const graphQuery$ = Observable.from(model.get(..._paths).progressively());
 
         return graphQuery$
-          .map(graphFragment => ({ graphFragment, graphFragmentStatus: 'next' }))
+          .startWith({})
+          .map(graphFragment => Object.assign({}, props, { graphFragment, graphFragmentStatus: 'next' }))
           .catch((err, caught) => errorHandler(err, props, caught))
           .merge(graphQuery$
             .last()
-            .map(graphFragment => ({ graphFragment, graphFragmentStatus: 'complete' }))
+            .map(graphFragment => Object.assign({}, props, { graphFragment, graphFragmentStatus: 'complete' }))
             .catch(() => Observable.empty())
-          )
-          .repeatWhen(() => graphChange$);
-      });
-
-    return props$
-      .map(props => Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'next' }))
-      .merge(graphQueryResponse$.withLatestFrom(props$, (response, props) => Object.assign({}, props, response)))
-      .auditTime(auditTime);
-
-    // Note - the more straightforward use of combineLatest fails when props$ fires rapidly
-    // a situation with no test case yet
-    // return Observable.combineLatest(
-    //   _props$,
-    //   graphQueryResponse$.startWith({ graphFragment: {}, graphFragmentStatus: 'next' }),
-    //   (props, graphQueryResponse) => Object.assign({}, props, graphQueryResponse)
-    // );
+          );
+      })
+      .repeatWhen(() => graphChange$);
   };
 };
