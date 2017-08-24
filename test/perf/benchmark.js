@@ -8,7 +8,7 @@ require('rxjs/add/operator/take');
 const {
   Model
 } = require('@graphistry/falcor/dist/falcor.all.min');
-const { createFalcorModel } = require('../utils');
+const { createFalcorModel } = require('../test-utils');
 const { withGraphFragment } = require('../../src/');
 
 

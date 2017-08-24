@@ -12,7 +12,7 @@ const {
 // const {
 //   Model: NetflixModel
 // } = require('falcor');
-const { createCache } = require('../utils');
+const { createCache } = require('../test-utils');
 
 
 const createFalcorPerfTests = () => {
