@@ -3,7 +3,6 @@ const {
 } = require('rxjs/Observable');
 require('rxjs/add/observable/from');
 require('rxjs/add/observable/empty');
-require('rxjs/add/operator/withLatestFrom');
 require('rxjs/add/operator/last');
 require('rxjs/add/operator/merge');
 require('rxjs/add/operator/repeatWhen');
@@ -28,7 +27,7 @@ exports.default = (
   falcorModel,
   graphChange$,
   {
-    errorHandler = error => Observable.of({ graphFragment: {}, graphFragmentStatus: 'error', error }),
+    errorHandler = (error, props) => Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'error', error })),
     prefixStream = props$ => props$,
     auditTime = 0
   } = {}
@@ -61,11 +60,11 @@ exports.default = (
         const graphQuery$ = Observable.from(model.get(..._paths).progressively());
 
         return graphQuery$
-          .map(graphFragment => ({ graphFragment, graphFragmentStatus: 'next' }))
+          .map(graphFragment => Object.assign({}, props, { graphFragment, graphFragmentStatus: 'next' }))
           .catch((err, caught) => errorHandler(err, props, caught))
           .merge(graphQuery$
             .last()
-            .map(graphFragment => ({ graphFragment, graphFragmentStatus: 'complete' }))
+            .map(graphFragment => Object.assign({}, props, { graphFragment, graphFragmentStatus: 'complete' }))
             .catch(() => Observable.empty())
           )
           .repeatWhen(() => graphChange$);
@@ -73,15 +72,7 @@ exports.default = (
 
     return props$
       .map(props => Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'next' }))
-      .merge(graphQueryResponse$.withLatestFrom(props$, (response, props) => Object.assign({}, props, response)))
+      .merge(graphQueryResponse$)
       .auditTime(auditTime);
-
-    // Note - the more straightforward use of combineLatest fails when props$ fires rapidly
-    // a situation with no test case yet
-    // return Observable.combineLatest(
-    //   _props$,
-    //   graphQueryResponse$.startWith({ graphFragment: {}, graphFragmentStatus: 'next' }),
-    //   (props, graphQueryResponse) => Object.assign({}, props, graphQueryResponse)
-    // );
   };
 };
