@@ -1,3 +1,4 @@
+const $$observable = require('symbol-observable');
 const {
   Observable
 } = require('rxjs/Observable');
@@ -28,6 +29,9 @@ const observableFromStore = exports.observableFromStore = store => ({
     observer.next(state);
 
     return { unsubscribe };
+  },
+  [$$observable]() {
+    return this;
   }
 });
 
