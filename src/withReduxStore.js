@@ -14,7 +14,7 @@ require('rxjs/add/operator/map');
  */
 const observableFromStore = exports.observableFromStore = store => ({
   subscribe: (observer) => {
-    let state = {};
+    let state = store.getState();
 
     const unsubscribe = store.subscribe(() => {
       const newState = store.getState();
@@ -24,6 +24,8 @@ const observableFromStore = exports.observableFromStore = store => ({
         observer.next(newState);
       }
     });
+
+    observer.next(state);
 
     return { unsubscribe };
   }
