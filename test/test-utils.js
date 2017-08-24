@@ -39,9 +39,9 @@ exports.tapeResultObserver = (t) => {
     next(props) {
       idx += 1;
       if (expectedResults[idx]) {
-        t.deepEqual(props, expectedResults[idx], `emission ${idx} should match expected output`);
+        t.deepEqual(props, expectedResults[idx], `emission ${idx + 1} should match expected output`);
       } else {
-        t.fail(`test emitted more than expected ${expectedResults.length} times: \n${JSON.stringify(props)}`);
+        t.fail(`test emitted ${idx + 1} times; expected ${expectedResults.length} emissions. \nExtra emit: ${JSON.stringify(props)}`);
       }
     },
     error(err) {
