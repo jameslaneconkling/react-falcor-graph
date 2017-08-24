@@ -44,12 +44,10 @@ exports.default = (store, mapState, mapDispatch) => props$ => {
 
   return props$
     .distinctUntilChanged()
-    .combineLatest(Observable.from(store$))
-    .map(([props, state]) => ([
-      props,
-      mapState(state, props),
-      mapDispatch(store.dispatch, props)
-    ]))
+    .combineLatest(
+      Observable.from(store$),
+      ([props, state]) => ([props, mapState(state, props), mapDispatch(store.dispatch, props)])
+    )
     .distinctUntilChanged((
       [prevProps, prevStateProps, prevDispatchProps],
       [nextProps, nextStateProps, nextDispatchProps]
