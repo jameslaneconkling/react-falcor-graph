@@ -37,6 +37,30 @@ const observableFromStore = exports.observableFromStore = store => ({
 
 
 /**
+ * @param {Object} first
+ * @param {Object} second
+ *
+ * @returns {Boolean}
+ */
+const shallowEquals = exports.shallowEquals = (first, second) => {
+  const firstKeys = Object.keys(first);
+  const secondKeys = Object.keys(second);
+
+  if (firstKeys.length !== secondKeys.length) {
+    return false;
+  }
+
+  for (let i = 0; i < firstKeys.length; i++) {
+    if (first[firstKeys[i]] === second[firstKeys[i]]) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+
+/**
  * @param {Object} store
  * @param {(state, props) -> props} mapState
  * @param {(dispatch, props) -> props} mapDispatch
@@ -47,18 +71,10 @@ exports.default = (store, mapState, mapDispatch) => props$ => {
   const store$ = observableFromStore(store);
 
   return props$
-    .distinctUntilChanged()
     .combineLatest(
       Observable.from(store$),
-      ([props, state]) => ([props, mapState(state, props), mapDispatch(store.dispatch, props)])
+      ([props, state]) => Object.assign({}, props, mapState(state, props), mapDispatch(store.dispatch, props))
     )
-    .distinctUntilChanged((
-      [prevProps, prevStateProps, prevDispatchProps],
-      [nextProps, nextStateProps, nextDispatchProps]
-    ) => (
-      prevProps === nextProps &&
-      prevStateProps === nextStateProps &&
-      prevDispatchProps === nextDispatchProps
-    ))
+    .distinctUntilChanged(shallowEquals)
     .map((props, stateProps, dispatchProps) => Object.assign({}, stateProps, dispatchProps));
 };
