@@ -1,4 +1,4 @@
-const $$observable = require('symbol-observable');
+const { observable } = require('rxjs/symbol/observable');
 const {
   Observable
 } = require('rxjs/Observable');
@@ -30,7 +30,7 @@ const observableFromStore = exports.observableFromStore = store => ({
 
     return { unsubscribe };
   },
-  [$$observable]() {
+  [observable]() {
     return this;
   }
 });
@@ -75,6 +75,8 @@ exports.default = (store, mapState, mapDispatch) => props$ => {
       Observable.from(store$),
       ([props, state]) => Object.assign({}, props, mapState(state, props), mapDispatch(store.dispatch, props))
     )
+    // TODO - test if it is more performant to merge props, stateProps, dispatchProps and test equality once
+    // or to test equality individually and merge if not equal
     .distinctUntilChanged(shallowEquals)
     .map((props, stateProps, dispatchProps) => Object.assign({}, stateProps, dispatchProps));
 };
