@@ -28,6 +28,30 @@ if (!global.gc) {
 }
 
 
+const model4To5 = model => ({
+  get: (...args) => ({
+    progressively: () => ({
+      subscribe(observer) {
+        const subscription = model.get(...args)
+          .progressively()
+          .subscribe({
+            onNext(data) { observer.next(data); },
+            onError(data) { observer.error(data); },
+            onCompleted(data) { observer.complete(data); }
+          });
+
+        return {
+          unsubscribe: () => subscription.dispose()
+        };
+      },
+      [observable]() {
+        return this;
+      }
+    })
+  })
+});
+
+
 const createPerfTests = ([head, ...rest]) => {
   if (head) {
     console.log(head.name);
@@ -94,33 +118,10 @@ createPerfTests([
   {
     name: 'Request Static Graph of 100 Paths [Netflix]',
     body: () => {
-      // wrap rxjs v4 observable in v5
-      const _model = new NetflixModel({
+      const model = model4To5(new NetflixModel({
         cache: createItemsCache(200),
-      });
+      }));
 
-      const model = {
-        get: (...args) => ({
-          progressively: () => ({
-            subscribe(observer) {
-              const subscription = _model.get(...args)
-                .progressively()
-                .subscribe({
-                  onNext(data) { observer.next(data); },
-                  onError(data) { observer.error(data); },
-                  onCompleted(data) { observer.complete(data); }
-                });
-
-              return {
-                unsubscribe: () => subscription.dispose()
-              };
-            },
-            [observable]() {
-              return this;
-            }
-          })
-        })
-      };
 
       const paths = ({ from, to }) => [['items', { from, to }, 'title']];
 
@@ -171,6 +172,33 @@ createPerfTests([
         cache: createItemsCache(200),
         recycleJSON: true
       });
+
+      const paths = ({ from, to }) => [['items', { from, to }, 'title']];
+
+      const props$ = Observable.of(null)
+        .map(() => {
+          tick = !tick;
+          return tick ?
+            { id: 1, from: 0, to: 99 } :
+            { id: 2, from: 100, to: 199 };
+        });
+
+      return props$
+        .map(props => Object.assign(props, { t1: new Date() }))
+        .let(props$ =>
+          withGraphFragment(paths, model, props$.delay(0))(props$)
+        )
+        .map(props => Object.assign(props, { t2: new Date() }));
+    }
+  },
+  {
+    name: 'Request Dynamic Graph of 100 Paths [Netflix]',
+    body: () => {
+      let tick = false;
+
+      const model = model4To5(new NetflixModel({
+        cache: createItemsCache(200),
+      }));
 
       const paths = ({ from, to }) => [['items', { from, to }, 'title']];
 
