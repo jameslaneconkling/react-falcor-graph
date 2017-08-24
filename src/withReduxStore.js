@@ -21,10 +21,7 @@ const observableFromStore = exports.observableFromStore = store => ({
 
       if (newState !== state) {
         state = newState;
-        observer.next({
-          state: newState,
-          dispatch: store.dispatch
-        });
+        observer.next(newState);
       }
     });
 
@@ -44,12 +41,20 @@ exports.default = (store, mapState, mapDispatch) => props$ => {
   const store$ = observableFromStore(store);
 
   return props$
+    .distinctUntilChanged()
     .combineLatest(Observable.from(store$))
-    .map(([props, { state, dispatch }]) => Object.assign(
-      {},
+    .map(([props, state]) => ([
       props,
       mapState(state, props),
-      mapDispatch(dispatch, props)
+      mapDispatch(store.dispatch, props)
+    ]))
+    .distinctUntilChanged((
+      [prevProps, prevStateProps, prevDispatchProps],
+      [nextProps, nextStateProps, nextDispatchProps]
+    ) => (
+      prevProps === nextProps &&
+      prevStateProps === nextStateProps &&
+      prevDispatchProps === nextDispatchProps
     ))
-    .distinctUntilChanged();
+    .map((props, stateProps, dispatchProps) => Object.assign({}, stateProps, dispatchProps));
 };
