@@ -719,6 +719,59 @@ test('Should emit single error', (t) => {
 });
 
 
+test.skip('Should continue emitting after error emission', (t) => {
+  t.plan(3);
+  const {
+    stream: change$,
+    handler: graphChange
+  } = createEventHandler();
+
+  const model = new Model({
+    source: {
+      get: () => Observable.timer(50)
+        .concat(Observable.throw({
+          status: 500
+        }))
+    },
+    recycleJSON: RECYCLEJSON,
+    onChange: graphChange
+  })
+    .batch()
+    .boxValues()
+    .treatErrorsAsValues();
+
+  const paths = ({ id }) => [['items', id, 'title']];
+
+  const expectedResults = [
+    {
+      graphFragment: {},
+      graphFragmentStatus: 'next',
+      id: 0
+    },
+    {
+      graphFragment: {},
+      graphFragmentStatus: 'error',
+      id: 0,
+      error: { $type: 'error', value: { status: 500 } }
+    },
+    {
+      graphFragment: {},
+      graphFragmentStatus: 'error',
+      id: 0,
+      some: 'thing',
+      error: { $type: 'error', value: { status: 500 } }
+    }
+  ];
+
+
+  withGraphFragment(paths, model, change$, { auditTime: 10 })(
+    Observable.of({ id: 0 })
+      .concat(Observable.of({ id: 0, some: 'thing' }).delay(100))
+  )
+    .subscribe(tapeResultObserver(t)(expectedResults));
+});
+
+
 test('Emits errors to all requests when batched request returns an error', (t) => {
   t.plan(4);
   const dataSource = {
