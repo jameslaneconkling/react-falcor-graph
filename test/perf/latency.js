@@ -1,5 +1,5 @@
 /* eslint-disable no-console */
-const $$observable = require('symbol-observable');
+const { observable } = require('rxjs/symbol/observable');
 const { Observable } = require('rxjs/Observable');
 require('rxjs/add/observable/of');
 require('rxjs/add/operator/map');
@@ -98,40 +98,29 @@ createPerfTests([
       const _model = new NetflixModel({
         cache: createItemsCache(200),
       });
+
       const model = {
         get: (...args) => ({
-          progressively: () => Observable.create(observer => (
-            _model.get(...args).progressively().subscribe({
-              onNext(data) { observer.next(data); },
-              onError(data) { observer.error(data); },
-              onCompleted(data) { observer.complete(data); }
-            })
-          ))
+          progressively: () => ({
+            subscribe(observer) {
+              const subscription = _model.get(...args)
+                .progressively()
+                .subscribe({
+                  onNext(data) { observer.next(data); },
+                  onError(data) { observer.error(data); },
+                  onCompleted(data) { observer.complete(data); }
+                });
+
+              return {
+                unsubscribe: () => subscription.dispose()
+              };
+            },
+            [observable]() {
+              return this;
+            }
+          })
         })
       };
-
-      // const model = {
-      //   get: (...args) => ({
-      //     progressively: () => ({
-      //       subscribe(observer) {
-      //         const subscription = _model.get(...args)
-      //           .progressively()
-      //           .subscribe({
-      //             onNext(data) { observer.next(data); },
-      //             onError(data) { observer.error(data); },
-      //             onCompleted(data) { observer.complete(data); }
-      //           });
-
-      //         return {
-      //           unsubscribe: () => subscription.unsubscribe()
-      //         };
-      //       },
-      //       [$$observable]() {
-      //         return this;
-      //       }
-      //     })
-      //   })
-      // };
 
       const paths = ({ from, to }) => [['items', { from, to }, 'title']];
 

@@ -27,8 +27,7 @@
   "homepage": "https://github.com/jameslaneconkling/react-falcor-graph#readme",
   "dependencies": {
     "recompose": "^0.24.0",
-    "rxjs": "^5.4.2",
-    "symbol-observable": "^1.0.4"
+    "rxjs": "^5.4.2"
   },
   "devDependencies": {
     "@graphistry/falcor": "^2.9.6",
