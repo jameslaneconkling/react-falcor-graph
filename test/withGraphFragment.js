@@ -15,7 +15,7 @@ const {
 const {
   // createFalcorModel,
   tapeResultObserver
-} = require('./utils');
+} = require('./test-utils');
 const { withGraphFragment } = require('../src');
 
 
