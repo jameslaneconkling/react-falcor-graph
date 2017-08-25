@@ -45,7 +45,7 @@ exports.tapeResultObserver = (t) => {
       }
     },
     error(err) {
-      t.fail(`test emitted error ${JSON.stringify(err)}`);
+      t.fail(`test emitted error: ${err.message || err}`);
     }
   });
 };
