@@ -43,6 +43,10 @@ const observableFromStore = exports.observableFromStore = store => ({
  * @returns {Boolean}
  */
 const shallowEquals = exports.shallowEquals = (first, second) => {
+  if (first === second) {
+    return true;
+  }
+
   const firstKeys = Object.keys(first);
   const secondKeys = Object.keys(second);
 
@@ -51,7 +55,7 @@ const shallowEquals = exports.shallowEquals = (first, second) => {
   }
 
   for (let i = 0; i < firstKeys.length; i++) {
-    if (first[firstKeys[i]] === second[firstKeys[i]]) {
+    if (first[firstKeys[i]] !== second[firstKeys[i]]) {
       return false;
     }
   }
@@ -70,13 +74,17 @@ const shallowEquals = exports.shallowEquals = (first, second) => {
 exports.default = (store, mapState, mapDispatch) => props$ => {
   const store$ = observableFromStore(store);
 
+  // NOTE - how will this handle nested connected components?
+  // see react-redux's approach: parent connected components update
+  // state tree fully before children receive subscription update
   return props$
     .combineLatest(
       Observable.from(store$),
-      ([props, state]) => Object.assign({}, props, mapState(state, props), mapDispatch(store.dispatch, props))
+      (props, state) => ([props, mapState(state, props)])
     )
-    // TODO - test if it is more performant to merge props, stateProps, dispatchProps and test equality once
-    // or to test equality individually and merge if not equal
-    .distinctUntilChanged(shallowEquals)
-    .map((props, stateProps, dispatchProps) => Object.assign({}, stateProps, dispatchProps));
+    .distinctUntilChanged(([prevProps, prevStateProps], [props, stateProps]) =>
+      shallowEquals(prevProps, props) &&
+      shallowEquals(prevStateProps, stateProps)
+    )
+    .map(([props, stateProps]) => Object.assign({}, props, stateProps, mapDispatch(store.dispatch, props)));
 };
