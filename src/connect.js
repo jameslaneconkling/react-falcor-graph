@@ -5,8 +5,8 @@ const {
   wrapDisplayName,
   mapPropsStream
 } = require('recompose');
-const withGraphFragment = require('./withGraphFragment');
-const withReduxStore = require('./withReduxStore');
+const withGraphFragment = require('./withGraphFragment').default;
+const withReduxStore = require('./withReduxStore').default;
 
 
 /**
