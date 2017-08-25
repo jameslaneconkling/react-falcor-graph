@@ -70,7 +70,7 @@ exports.default = (
           .repeatWhen(() => graphChange$);
       });
 
-    return props$
+    return _props$
       .map(props => Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'next' }))
       .merge(graphQueryResponse$)
       .auditTime(auditTime);

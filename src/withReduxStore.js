@@ -77,7 +77,7 @@ exports.default = (store, mapState, mapDispatch) => props$ => {
   // NOTE - how will this handle nested connected components?
   // see react-redux's approach: parent connected components update
   // state tree fully before children receive subscription update
-  return props$
+  return Observable.from(props$)
     .combineLatest(
       Observable.from(store$),
       (props, state) => ([props, mapState(state, props)])
