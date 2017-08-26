@@ -126,6 +126,20 @@ const CreateNewTodoFormContainer = mapPropsStream(props$ => {
 })(CreateNewTodoForm)
 ```
 
+## Testing
+
+Unit Testing
+
+```bash
+npm run test:unit
+```
+
+React Integration Testing
+
+```bash
+npm run jest:integration
+```
+
 
 ### See Also
 [graphistry/falcor-react-schema](https://github.com/graphistry/falcor/tree/master/packages/falcor-react-schema).
