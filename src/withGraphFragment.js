@@ -2,6 +2,7 @@ const {
   Observable
 } = require('rxjs/Observable');
 require('rxjs/add/observable/from');
+require('rxjs/add/observable/of');
 require('rxjs/add/observable/empty');
 require('rxjs/add/operator/last');
 require('rxjs/add/operator/merge');
