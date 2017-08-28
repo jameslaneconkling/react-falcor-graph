@@ -1,31 +1,43 @@
 /* eslint-disable react/prop-types */
 import React                from 'react';
-import renderer             from 'react-test-renderer';
+import {
+  shallow
+}                           from 'enzyme';
 import {
   createStore
 }                           from 'redux';
 import { connectRedux }     from '../../src';
 
+const Empty = () => {};
+const createSpyComponent = () => {
+  let propsOverTime = [];
 
-test('connectRedux renders component with store data', () => {
-  const App = ({ id, item }) => (
-    <div>Id: {id} - {item.title}</div>
-  );
+  const Spy = (props) => {
+    propsOverTime.push(props);
+    return <Empty />;
+  };
 
+  Spy.propsOverTime = propsOverTime;
+
+  return Spy;
+};
+
+test('connectRedux renders component with parent props merged with props selected from redux store', () => {
+  const SpyComponent = createSpyComponent();
   const store = createStore((state = {
     items: {
       a: { title: 'Item A' }
     }
   }) => state);
-  const mapState = (state, { id }) => ({ item: state.items[id] });
-  const mapDispatch = () => ({});
+  const mapState = (state, { id }) => ({ title: state.items[id].title });
+  const mapDispatch = () => {};
 
-  const ConnectedApp = connectRedux(
+  const ConnectedComponent = connectRedux(
     store, mapState, mapDispatch
-  )(App);
+  )(SpyComponent);
 
 
-  const tree = renderer.create(<ConnectedApp id="a" />).toJSON();
+  shallow(<ConnectedComponent id="a" />);
 
-  expect(tree).toMatchSnapshot();
+  expect(SpyComponent.propsOverTime).toEqual([{ id: 'a', title: 'Item A' }]);
 });
