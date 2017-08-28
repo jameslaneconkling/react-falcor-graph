@@ -23,7 +23,7 @@ const createSpyComponent = () => {
 };
 
 test('connectRedux renders component with parent props merged with props selected from redux store', () => {
-  const SpyComponent = createSpyComponent();
+  const Component = createSpyComponent();
   const store = createStore((state = {
     items: {
       a: { title: 'Item A' }
@@ -34,10 +34,10 @@ test('connectRedux renders component with parent props merged with props selecte
 
   const ConnectedComponent = connectRedux(
     store, mapState, mapDispatch
-  )(SpyComponent);
+  )(Component);
 
 
   shallow(<ConnectedComponent id="a" />);
 
-  expect(SpyComponent.propsOverTime).toEqual([{ id: 'a', title: 'Item A' }]);
+  expect(Component.propsOverTime).toEqual([{ id: 'a', title: 'Item A' }]);
 });
