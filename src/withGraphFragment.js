@@ -12,6 +12,9 @@ require('rxjs/add/operator/startWith');
 require('rxjs/add/operator/map');
 require('rxjs/add/operator/catch');
 require('rxjs/add/operator/auditTime');
+const {
+  isPaths
+} = require('./utils');
 
 
 /**
@@ -46,6 +49,13 @@ exports.default = (
           return Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'complete' }));
         } else if (_paths instanceof Error) {
           return Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'error', error: _paths.message }));
+        } else if (!isPaths(_paths)) {
+          console.error('Expected an array of paths, e.g [["todos", 0, "title"],["todos", "length"]].  Received:', _paths);
+          return Observable.of(Object.assign({}, props, {
+            graphFragment: {},
+            graphFragmentStatus: 'error',
+            error: `Expected an array of paths, e.g [["todos", 0, "title"],["todos", "length"]].  Received ${JSON.stringify(_paths)}`
+          }));
         }
 
         let model;

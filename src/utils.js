@@ -43,3 +43,22 @@ const walkTree = exports.walkTree = (path, tree, graph = tree) => {
   }
   return undefined;
 };
+
+
+exports.isPaths = paths => {
+  if (!Array.isArray(paths)) {
+    return false;
+  }
+
+  if (paths.length === 0) {
+    return false;
+  }
+
+  for (let i = 0; i < paths.length; i++) {
+    if (!Array.isArray(paths[i])) {
+      return false;
+    }
+
+    return true;
+  }
+};
