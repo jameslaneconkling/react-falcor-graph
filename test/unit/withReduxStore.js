@@ -9,7 +9,7 @@ const {
 const {
   tapeResultObserver
 } = require('./test-utils');
-const { withReduxStore } = require('../src');
+const { withReduxStore } = require('../../src');
 
 
 test('Should merge single emission with store', (t) => {

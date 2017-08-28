@@ -16,7 +16,7 @@ const {
   // createFalcorModel,
   tapeResultObserver
 } = require('./test-utils');
-const { withGraphFragment } = require('../src');
+const { withGraphFragment } = require('../../src');
 
 
 const RECYCLEJSON = true;

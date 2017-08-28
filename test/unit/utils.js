@@ -3,7 +3,7 @@ const {
   walkTree,
   expandPath,
   expandPaths
-} = require('../src/utils');
+} = require('../../src/utils');
 
 
 tape('walkTree - Should return the value in the tree at the specified value', (t) => {
