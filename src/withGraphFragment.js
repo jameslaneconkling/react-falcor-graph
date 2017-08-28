@@ -44,8 +44,8 @@ exports.default = (
 
         if (!_paths) {
           return Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'complete' }));
-        } else if (paths instanceof Error) {
-          return Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'error', error: paths.message }));
+        } else if (_paths instanceof Error) {
+          return Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'error', error: _paths.message }));
         }
 
         let model;
