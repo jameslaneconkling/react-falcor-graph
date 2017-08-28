@@ -7,7 +7,7 @@ import {
 import { connectRedux }     from '../../src';
 
 
-test('connectRedux render component with ', () => {
+test('connectRedux renders component with store data', () => {
   const App = ({ id, item }) => (
     <div>Id: {id} - {item.title}</div>
   );
