@@ -47,12 +47,22 @@ exports.default = (
           return Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'complete' }));
         } else if (_paths instanceof Error) {
           return Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'error', error: _paths.message }));
-        } else if (!isPaths(_paths)) {
+        }
+
+        // validate input
+        if (!isPaths(_paths)) {
           console.error('Expected an array of paths, e.g [["todos", 0, "title"],["todos", "length"]].  Received:', _paths);
           return Observable.of(Object.assign({}, props, {
             graphFragment: {},
             graphFragmentStatus: 'error',
             error: `Expected an array of paths, e.g [["todos", 0, "title"],["todos", "length"]].  Received ${JSON.stringify(_paths)}`
+          }));
+        } else if (falcorModel._recycleJSON && (props.id === undefined || props.id === null)) {
+          console.error('If using FalcorModel.recycleJSON, must also pass a unique \'id\' property');
+          return Observable.of(Object.assign({}, props, {
+            graphFragment: {},
+            graphFragmentStatus: 'error',
+            error: 'If using FalcorModel.recycleJSON, must also pass a unique \'id\' property'
           }));
         }
 
