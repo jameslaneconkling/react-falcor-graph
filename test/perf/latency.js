@@ -18,7 +18,7 @@ const {
 } = require('falcor/dist/falcor.browser.min');
 const {
   createItemsCache
-} = require('../test-utils');
+} = require('../unit/test-utils');
 const {
   withGraphFragment
 } = require('../../src');
