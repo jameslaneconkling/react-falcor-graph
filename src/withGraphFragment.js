@@ -6,6 +6,8 @@ require('rxjs/add/observable/of');
 require('rxjs/add/observable/empty');
 require('rxjs/add/operator/last');
 require('rxjs/add/operator/merge');
+require('rxjs/add/operator/concat');
+require('rxjs/add/operator/throttleTime');
 require('rxjs/add/operator/repeatWhen');
 require('rxjs/add/operator/let');
 require('rxjs/add/operator/switchMap');
@@ -71,13 +73,12 @@ exports.default = (
         const graphQuery$ = Observable.from(model.get(..._paths).progressively());
 
         return graphQuery$
-          .map(graphFragment => Object.assign({}, props, { graphFragment, graphFragmentStatus: 'next' }))
+          .map((graphFragment) => {
+            const graphFragmentStatus = graphFragment.json.$__status === 'pending' ? 'next' : 'complete';
+
+            return Object.assign({}, props, { graphFragment, graphFragmentStatus });
+          })
           .catch((err, caught) => errorHandler(err, props, caught))
-          .merge(graphQuery$
-            .last()
-            .map(graphFragment => Object.assign({}, props, { graphFragment, graphFragmentStatus: 'complete' }))
-            .catch(() => Observable.empty())
-          )
           .repeatWhen(() => graphChange$);
       });
 
