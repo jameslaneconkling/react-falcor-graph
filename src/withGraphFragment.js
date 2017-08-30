@@ -33,18 +33,13 @@ exports.default = (
   falcorModel,
   graphChange$,
   {
-    errorHandler = (error, props) => Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'error', error })),
-    prefixStream = props$ => props$,
-    auditTime = 0
+    errorHandler = (error, props) => Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'error', error }))
   } = {}
 ) => {
   const _models = {};
 
-  return (props$) => {
-    const _props$ = Observable.from(props$);
-
-    const graphQueryResponse$ = _props$
-      .let(prefixStream)
+  return (props$) => (
+    Observable.from(props$)
       .switchMap((props) => {
         const _paths = typeof paths === 'function' ? paths(props) : paths;
 
@@ -70,21 +65,20 @@ exports.default = (
           model = _models[props.id];
         }
 
-        const graphQuery$ = Observable.from(model.get(..._paths).progressively());
-
-        return graphQuery$
+        return Observable.from(model.get(..._paths).progressively())
           .map((graphFragment) => {
             const graphFragmentStatus = graphFragment.json.$__status === 'pending' ? 'next' : 'complete';
 
             return Object.assign({}, props, { graphFragment, graphFragmentStatus });
           })
           .catch((err, caught) => errorHandler(err, props, caught))
+          .let(graphQuery$ => graphQuery$
+            .merge(
+              Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'next' }))
+            )
+            .throttleTime(0)
+          )
           .repeatWhen(() => graphChange$);
-      });
-
-    return _props$
-      .map(props => Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'next' }))
-      .merge(graphQueryResponse$)
-      .auditTime(auditTime);
-  };
+      })
+  );
 };

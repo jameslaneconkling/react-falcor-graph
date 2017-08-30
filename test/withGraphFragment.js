@@ -874,6 +874,7 @@ test('Emits errors to all requests when batched request returns an error', (t) =
   const model = new Model({
     cache: {},
     source: dataSource,
+    recycleJSON: RECYCLEJSON,
     onChange: graphChange
   })
     .batch()
