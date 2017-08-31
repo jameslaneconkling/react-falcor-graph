@@ -32,7 +32,7 @@
     "rxjs": "^5.4.3"
   },
   "devDependencies": {
-    "@graphistry/falcor": "^2.9.6",
+    "@graphistry/falcor": "^2.9.7",
     "babel-cli": "^6.24.1",
     "babel-core": "^6.25.0",
     "babel-loader": "^7.1.2",
