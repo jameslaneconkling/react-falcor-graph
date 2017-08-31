@@ -12,11 +12,35 @@ const { Model } = require('@graphistry/falcor/dist/falcor.all.min');
 const {
   createEventHandler
 } = require('recompose');
-const {
-  // createFalcorModel,
-  tapeResultObserver
-} = require('./test-utils');
 const { withGraphFragment } = require('../../src');
+
+
+const tapeResultObserver = (t, recycleJSON) => {
+  let idx = -1;
+
+  return (expectedResults) => ({
+    next(props) {
+      idx += 1;
+      if (expectedResults[idx]) {
+        if (recycleJSON) {
+          t.deepEqual(props, expectedResults[idx], `emission ${idx + 1} should match expected output`);
+        } else {
+          t.deepEqual(
+            Object.assign({}, props, { graphFragment: props.graphFragment.json ? { json: props.graphFragment.json.toJSON() } : props.graphFragment }),
+            expectedResults[idx],
+            `emission ${idx + 1} should match expected output`
+          );
+        }
+      } else {
+        t.fail(`test emitted ${idx + 1} times; expected ${expectedResults.length} emissions. \nExtra emit: ${JSON.stringify(props)}`);
+      }
+    },
+    error(err) {
+      t.fail(`test emitted error: ${err.message || err}`);
+    }
+  });
+};
+
 
 
 const RECYCLEJSON = true;
@@ -65,7 +89,7 @@ test('Should emit next and complete status for path to remote graph fragment', (
 
 
   withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 0 }))
-    .subscribe(tapeResultObserver(t)(expectedResults));
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
 
@@ -101,7 +125,7 @@ test('Should emit complete graphFragment for path in cache', (t) => {
 
 
   withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 0 }))
-    .subscribe(tapeResultObserver(t)(expectedResults));
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
 
@@ -158,7 +182,7 @@ test('Should emit progressively for query in local cache and remote service', (t
 
 
   withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 2 }))
-    .subscribe(tapeResultObserver(t)(expectedResults));
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
 
@@ -243,7 +267,7 @@ test('Should emit next when props change updates path', (t) => {
     Observable.of({ range: { to: 1 } })
       .concat(Observable.of({ range: { to: 2 } }).delay(200))
   )
-    .subscribe(tapeResultObserver(t)(expectedResults));
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
 
@@ -279,7 +303,7 @@ test('Should handle paths passed as array', (t) => {
 
 
   withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 0 }))
-    .subscribe(tapeResultObserver(t)(expectedResults));
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
 
@@ -307,7 +331,7 @@ test('Should handle null paths', (t) => {
 
 
   withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.never().startWith({ id: 0 }))
-    .subscribe(tapeResultObserver(t)(expectedResults));
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
 
@@ -363,7 +387,7 @@ test('Should emit when props change', (t) => {
       Observable.of({ id: 0, some: 'other thing' }).delay(200)
     )
   )
-    .subscribe(tapeResultObserver(t)(expectedResults));
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
 
@@ -426,7 +450,7 @@ test('Should emit when props change before request resolves', (t) => {
       Observable.of({ id: 0, some: 'other thing' }).delay(50)
     )
   )
-    .subscribe(tapeResultObserver(t)(expectedResults));
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
 
@@ -510,7 +534,7 @@ test('Should emit progressively when datasource streams multiple parts of respon
   ];
 
   withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({}))
-    .subscribe(tapeResultObserver(t)(expectedResults));
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
 
@@ -586,7 +610,7 @@ test('Should detect changes to the graph', (t) => {
   }, 100);
 
   withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 0 }))
-    .subscribe(tapeResultObserver(t)(expectedResults));
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
 
@@ -634,7 +658,7 @@ test('Should handle queries whose nodes expire immediately', (t) => {
 
 
   withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 0 }))
-    .subscribe(tapeResultObserver(t)(expectedResults));
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
 
@@ -692,7 +716,7 @@ test.skip('Should modify query stream via prefixStream without modifying prop st
   withGraphFragment(paths, model, change$, {
     prefixStream: query$ => query$.debounceTime(60)
   })(props$)
-    .subscribe(tapeResultObserver(t)(expectedResults));
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
 
@@ -757,7 +781,7 @@ test.skip('Should not modify query stream via prefixStream if path is null', (t)
   withGraphFragment(paths, model, change$, {
     prefixStream: query$ => query$.debounceTime(60)
   })(props$)
-    .subscribe(tapeResultObserver(t)(expectedResults));
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
 
@@ -800,7 +824,7 @@ test('Should emit single error', (t) => {
 
 
   withGraphFragment(paths, model, change$, { auditTime: 10 })(Observable.of({ id: 0 }))
-    .subscribe(tapeResultObserver(t)(expectedResults));
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
 
@@ -853,7 +877,7 @@ test.skip('Should continue emitting after error emission', (t) => {
     Observable.of({ id: 0 })
       .concat(Observable.of({ id: 0, some: 'thing' }).delay(100))
   )
-    .subscribe(tapeResultObserver(t)(expectedResults));
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
 
