@@ -1,5 +1,4 @@
 /* eslint-disable no-console */
-const { observable } = require('rxjs/symbol/observable');
 const { Observable } = require('rxjs/Observable');
 require('rxjs/add/observable/of');
 require('rxjs/add/operator/map');
@@ -21,59 +20,16 @@ const {
   createItemsCache
 } = require('../unit/test-utils');
 const {
+  model4To5,
+  createPerfTests
+} = require('./perf-utils');
+const {
   withGraphFragment
 } = require('../../src');
 
 if (!global.gc) {
   console.warn('Manual garbage collection not enabled.  For more accurate results, please run script with the --expose-gc flag');
 }
-
-
-const model4To5 = model => ({
-  get: (...args) => ({
-    progressively: () => ({
-      subscribe(observer) {
-        const subscription = model.get(...args)
-          .progressively()
-          .subscribe({
-            onNext(data) { observer.next(data); },
-            onError(data) { observer.error(data); },
-            onCompleted(data) { observer.complete(data); }
-          });
-
-        return {
-          unsubscribe: () => subscription.dispose()
-        };
-      },
-      [observable]() {
-        return this;
-      }
-    })
-  })
-});
-
-
-const createPerfTests = ([head, ...rest]) => {
-  if (head) {
-    console.log(head.name);
-
-    head.body()
-      // .do(({ t1, t2 }) => console.log(`\t${t2 - t1}ms`))
-      .repeat(head.options && head.options.iterations || 500)
-      .skip(2)
-      .reduce(({ runningSum, count }, { t1, t2 }) => ({
-        runningSum: runningSum + (t2 - t1),
-        count: count + 1
-      }), { runningSum: 0, count: 0 })
-      .subscribe({
-        next: ({ runningSum, count }) => console.log(`\tAverage Time: ${Math.round((runningSum / count) * 10) / 10}ms\n`),
-        complete: () => {
-          typeof global.gc === 'function' && global.gc();
-          createPerfTests(rest);
-        }
-      });
-  }
-};
 
 
 createPerfTests([
@@ -87,14 +43,11 @@ createPerfTests([
 
       const paths = ({ from, to }) => [['items', { from, to }, 'title']];
 
-      // const props$ = Observable.of({ id: 1, from: 0, to: 99 }).concat(Observable.empty().delay(50));
       const props$ = Observable.of({ id: 1, from: 0, to: 99 });
 
       return props$
         .map(props => Object.assign(props, { t1: new Date() }))
-        .let(props$ =>
-          withGraphFragment(paths, model, Observable.empty())(props$)
-        )
+        .let(withGraphFragment(paths, model, Observable.empty()))
         .map(props => Object.assign(props, { t2: new Date() }));
     }
   },
@@ -108,14 +61,11 @@ createPerfTests([
 
       const paths = ({ from, to }) => [['items', { from, to }, 'title']];
 
-      // const props$ = Observable.of({ id: 1, from: 0, to: 99 }).concat(Observable.empty().delay(50));
       const props$ = Observable.of({ id: 1, from: 0, to: 99 });
 
       return props$
         .map(props => Object.assign(props, { t1: new Date() }))
-        .let(props$ =>
-          withGraphFragment(paths, model, props$.delay(0))(props$)
-        )
+        .let(withGraphFragment(paths, model, Observable.empty()))
         .map(props => Object.assign(props, { t2: new Date() }));
     }
   },
@@ -133,9 +83,7 @@ createPerfTests([
 
       return props$
         .map(props => Object.assign(props, { t1: new Date() }))
-        .let(props$ =>
-          withGraphFragment(paths, model, props$.delay(0))(props$)
-        )
+        .let(withGraphFragment(paths, model, Observable.empty()))
         .map(props => Object.assign(props, { t2: new Date() }));
     }
   },
@@ -161,9 +109,7 @@ createPerfTests([
 
       return props$
         .map(props => Object.assign(props, { t1: new Date() }))
-        .let(props$ =>
-          withGraphFragment(paths, model, props$.delay(0))(props$)
-        )
+        .let(withGraphFragment(paths, model, Observable.empty()))
         .map(props => Object.assign(props, { t2: new Date() }));
     }
   },
@@ -189,9 +135,7 @@ createPerfTests([
 
       return props$
         .map(props => Object.assign(props, { t1: new Date() }))
-        .let(props$ =>
-          withGraphFragment(paths, model, props$.delay(0))(props$)
-        )
+        .let(withGraphFragment(paths, model, Observable.empty()))
         .map(props => Object.assign(props, { t2: new Date() }));
     }
   },
@@ -216,9 +160,7 @@ createPerfTests([
 
       return props$
         .map(props => Object.assign(props, { t1: new Date() }))
-        .let(props$ =>
-          withGraphFragment(paths, model, props$.delay(0))(props$)
-        )
+        .let(withGraphFragment(paths, model, Observable.empty()))
         .map(props => Object.assign(props, { t2: new Date() }));
     }
   }
