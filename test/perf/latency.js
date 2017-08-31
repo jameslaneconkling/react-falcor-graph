@@ -5,6 +5,7 @@ require('rxjs/add/observable/of');
 require('rxjs/add/operator/map');
 require('rxjs/add/operator/do');
 require('rxjs/add/operator/let');
+require('rxjs/add/operator/skip');
 require('rxjs/add/operator/concat');
 require('rxjs/add/operator/filter');
 require('rxjs/add/operator/reduce');
@@ -58,7 +59,8 @@ const createPerfTests = ([head, ...rest]) => {
 
     head.body()
       // .do(({ t1, t2 }) => console.log(`\t${t2 - t1}ms`))
-      .repeat(head.options && head.options.iterations || 100)
+      .repeat(head.options && head.options.iterations || 500)
+      .skip(2)
       .reduce(({ runningSum, count }, { t1, t2 }) => ({
         runningSum: runningSum + (t2 - t1),
         count: count + 1
@@ -85,12 +87,13 @@ createPerfTests([
 
       const paths = ({ from, to }) => [['items', { from, to }, 'title']];
 
+      // const props$ = Observable.of({ id: 1, from: 0, to: 99 }).concat(Observable.empty().delay(50));
       const props$ = Observable.of({ id: 1, from: 0, to: 99 });
 
       return props$
         .map(props => Object.assign(props, { t1: new Date() }))
         .let(props$ =>
-          withGraphFragment(paths, model, props$.delay(0))(props$)
+          withGraphFragment(paths, model, Observable.empty())(props$)
         )
         .map(props => Object.assign(props, { t2: new Date() }));
     }
@@ -105,6 +108,7 @@ createPerfTests([
 
       const paths = ({ from, to }) => [['items', { from, to }, 'title']];
 
+      // const props$ = Observable.of({ id: 1, from: 0, to: 99 }).concat(Observable.empty().delay(50));
       const props$ = Observable.of({ id: 1, from: 0, to: 99 });
 
       return props$
