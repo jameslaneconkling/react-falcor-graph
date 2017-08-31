@@ -171,10 +171,7 @@ test('Should emit progressively for query in local cache and remote service', (t
       id: 2
     },
     {
-      graphFragment: { json: { items: {
-        0: { title: 'Item A' },
-        1: { title: 'Item B' }
-      } } },
+      graphFragment: { json: { items: { 0: { title: 'Item A' }, 1: { title: 'Item B' } } } },
       graphFragmentStatus: 'complete',
       id: 2
     }
@@ -243,29 +240,33 @@ test('Should emit next when props change updates path', (t) => {
     {
       graphFragment: {},
       graphFragmentStatus: 'next',
-      range: { to: 1 }
+      range: { to: 1 },
+      id: 0
     },
     {
       graphFragment: { json: { items: { 0: { title: 'Item A' }, 1: { title: 'Item B' }, length: 50 } } },
       graphFragmentStatus: 'complete',
-      range: { to: 1 }
+      range: { to: 1 },
+      id: 0
     },
     {
       graphFragment: { json: { items: { 0: { title: 'Item A' }, 1: { title: 'Item B' }, length: 50 } } },
       graphFragmentStatus: 'next',
-      range: { to: 2 }
+      range: { to: 2 },
+      id: 0
     },
     {
       graphFragment: { json: { items: { 0: { title: 'Item A' }, 1: { title: 'Item B' }, 2: { title: 'Item C' }, length: 50 } } },
       graphFragmentStatus: 'complete',
-      range: { to: 2 }
+      range: { to: 2 },
+      id: 0
     },
   ];
 
 
   withGraphFragment(paths, model, change$)(
-    Observable.of({ range: { to: 1 } })
-      .concat(Observable.of({ range: { to: 2 } }).delay(200))
+    Observable.of({ id: 0, range: { to: 1 } })
+      .concat(Observable.of({ id: 0, range: { to: 2 } }).delay(200))
   )
     .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
@@ -509,31 +510,47 @@ test('Should emit progressively when datasource streams multiple parts of respon
     {
       graphFragment: {},
       graphFragmentStatus: 'next',
+      id: 0
     },
     {
-      graphFragment: { json: { items: {
-        0: { title: 'Item A' }
-      } } },
+      graphFragment: {
+        json: {
+          items: {
+            0: { title: 'Item A' }
+          }
+        }
+      },
       graphFragmentStatus: 'next',
+      id: 0
     },
     {
-      graphFragment: { json: { items: {
-        0: { title: 'Item A' },
-        1: { title: 'Item B' },
-      } } },
+      graphFragment: {
+        json: {
+          items: {
+            0: { title: 'Item A' },
+            1: { title: 'Item B' },
+          }
+        }
+      },
       graphFragmentStatus: 'next',
+      id: 0
     },
     {
-      graphFragment: { json: { items: {
-        0: { title: 'Item A' },
-        1: { title: 'Item B' },
-        2: { title: 'Item C' }
-      } } },
+      graphFragment: {
+        json: {
+          items: {
+            0: { title: 'Item A' },
+            1: { title: 'Item B' },
+            2: { title: 'Item C' }
+          }
+        }
+      },
       graphFragmentStatus: 'complete',
+      id: 0
     },
   ];
 
-  withGraphFragment(paths, model, change$)(Observable.of({}))
+  withGraphFragment(paths, model, change$)(Observable.of({ id: 0 }))
     .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
 
@@ -688,28 +705,32 @@ test.skip('Should modify query stream via prefixStream without modifying prop st
     {
       graphFragment: {},
       graphFragmentStatus: 'next',
-      some: 'thing1'
+      some: 'thing1',
+      id: 0
     },
     {
       graphFragment: {},
       graphFragmentStatus: 'next',
-      some: 'thing2'
+      some: 'thing2',
+      id: 0
     },
     {
       graphFragment: {},
       graphFragmentStatus: 'next',
-      some: 'thing3'
+      some: 'thing3',
+      id: 0
     },
     {
       graphFragment: { json: { items: { 0: { title: 'Item A' } } } },
       graphFragmentStatus: 'complete',
-      some: 'thing3'
+      some: 'thing3',
+      id: 0
     }
   ];
 
-  const props$ = Observable.of({ some: 'thing1' })
-    .concat(Observable.of({ some: 'thing2' }).delay(50))
-    .concat(Observable.of({ some: 'thing3' }).delay(50))
+  const props$ = Observable.of({ some: 'thing1', id: 0 })
+    .concat(Observable.of({ some: 'thing2', id: 0 }).delay(50))
+    .concat(Observable.of({ some: 'thing3', id: 0 }).delay(50))
     .concat(Observable.never());
 
 
