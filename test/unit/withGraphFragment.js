@@ -184,9 +184,12 @@ test('Should emit progressively for query in local cache and remote service', (t
 
 
 /**
- * NOTE - this fails when recycleJSON is false
+ * NOTE - this test tests behavior where each path in query resolves partially or wholly
+ * it is superceded by the below skipped test which tests new paths that partially resolve
+ * _and_ new paths that don't resolve.  Second case doesn't work in falcor
+ * see: https://github.com/graphistry/falcor/issues/15
  */
-test('Should emit next when props change updates path', (t) => {
+test('Should emit next when when path changes and new path partially resolves', (t) => {
   t.plan(4);
   const {
     stream: change$,
@@ -200,20 +203,119 @@ test('Should emit next when props change updates path', (t) => {
         i += 1;
         if (i === 1) {
           return Observable.of({
-            paths: [['items', { to: 1 }, 'title'],['items', 'length']],
+            paths: [['items', 0, 'title'],['items', 'length']],
             jsonGraph: {
               items: {
                 0: { $type: 'ref', value: ['item', 'a'] },
-                1: { $type: 'ref', value: ['item', 'b'] },
                 length: 50
               },
               item: {
-                a: { title: 'Item A' },
-                b: { title: 'Item B' }
+                a: { title: 'Item A' }
               }
             }
           }).delay(100);
         } else if (i === 2) {
+          return Observable.of({
+            paths: [['items', 1, 'title']],
+            jsonGraph: {
+              items: {
+                1: { $type: 'ref', value: ['item', 'b'] }
+              },
+              item: {
+                b: { title: 'Item B' }
+              }
+            }
+          }).delay(100);
+        }
+
+        return Observable.throw('Shouldn\'t run');
+      }
+    },
+    recycleJSON: RECYCLEJSON,
+    onChange: graphChange
+  });
+
+  const paths = ({ keys }) => [['items', keys, 'title'], ['items', 'length']];
+
+  const expectedResults = [
+    {
+      graphFragment: {},
+      graphFragmentStatus: 'next',
+      keys: [0],
+      id: 0
+    },
+    {
+      graphFragment: { json: { items: { 0: { title: 'Item A' }, length: 50 } } },
+      graphFragmentStatus: 'complete',
+      keys: [0],
+      id: 0
+    },
+    {
+      graphFragment: { json: { items: { 0: { title: 'Item A' }, length: 50 } } },
+      graphFragmentStatus: 'next',
+      keys: [0, 1],
+      id: 0
+    },
+    {
+      graphFragment: { json: { items: { 0: { title: 'Item A' }, 1: { title: 'Item B' }, length: 50 } } },
+      graphFragmentStatus: 'complete',
+      keys: [0, 1],
+      id: 0
+    }
+  ];
+
+
+  withGraphFragment(paths, model, change$)(
+    Observable.of({ id: 0, keys: [0] })
+      .concat(Observable.of({ id: 0, keys: [0, 1] }).delay(200))
+  )
+    .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
+});
+
+
+
+/**
+ * NOTE - this fails when recycleJSON is false
+ * see: https://github.com/graphistry/falcor/issues/15
+ */
+test('Should emit next when props change updates path where updated path both partially resolves and does not resolve at all', (t) => {
+  t.plan(6);
+  const {
+    stream: change$,
+    handler: graphChange
+  } = createEventHandler();
+
+  let i = 0;
+  const model = new Model({
+    source: {
+      get: () => {
+        i += 1;
+        if (i === 1) {
+          return Observable.of({
+            paths: [['items', 0, 'title'],['items', 'length']],
+            jsonGraph: {
+              items: {
+                0: { $type: 'ref', value: ['item', 'a'] },
+                length: 50
+              },
+              item: {
+                a: { title: 'Item A' }
+              }
+            }
+          }).delay(100);
+        } else if (i === 2) {
+          return Observable.of({
+            paths: [['items', 1, 'title']],
+            jsonGraph: {
+              items: {
+                1: { $type: 'ref', value: ['item', 'b'] }
+              },
+              item: {
+                b: { title: 'Item B' }
+              }
+            }
+          }).delay(100);
+        } else if (i === 3) {
           return Observable.of({
             paths: [['items', 2, 'title']],
             jsonGraph: {
@@ -234,39 +336,52 @@ test('Should emit next when props change updates path', (t) => {
     onChange: graphChange
   });
 
-  const paths = ({ range }) => [['items', range, 'title'], ['items', 'length']];
+  const paths = ({ keys }) => [['items', keys, 'title'], ['items', 'length']];
 
   const expectedResults = [
     {
       graphFragment: {},
       graphFragmentStatus: 'next',
-      range: { to: 1 },
+      keys: [0],
       id: 0
     },
     {
-      graphFragment: { json: { items: { 0: { title: 'Item A' }, 1: { title: 'Item B' }, length: 50 } } },
+      graphFragment: { json: { items: { 0: { title: 'Item A' }, length: 50 } } },
       graphFragmentStatus: 'complete',
-      range: { to: 1 },
+      keys: [0],
       id: 0
     },
     {
-      graphFragment: { json: { items: { 0: { title: 'Item A' }, 1: { title: 'Item B' }, length: 50 } } },
+      graphFragment: { json: { items: { 0: { title: 'Item A' }, length: 50 } } },
       graphFragmentStatus: 'next',
-      range: { to: 2 },
+      keys: [0, 1],
       id: 0
     },
     {
-      graphFragment: { json: { items: { 0: { title: 'Item A' }, 1: { title: 'Item B' }, 2: { title: 'Item C' }, length: 50 } } },
+      graphFragment: { json: { items: { 0: { title: 'Item A' }, 1: { title: 'Item B' }, length: 50 } } },
       graphFragmentStatus: 'complete',
-      range: { to: 2 },
+      keys: [0, 1],
+      id: 0
+    },
+    {
+      graphFragment: { json: { items: { length: 50 } } },
+      graphFragmentStatus: 'next',
+      keys: [2],
+      id: 0
+    },
+    {
+      graphFragment: { json: { items: { 2: { title: 'Item C' }, length: 50 } } },
+      graphFragmentStatus: 'complete',
+      keys: [2],
       id: 0
     },
   ];
 
 
   withGraphFragment(paths, model, change$)(
-    Observable.of({ id: 0, range: { to: 1 } })
-      .concat(Observable.of({ id: 0, range: { to: 2 } }).delay(200))
+    Observable.of({ id: 0, keys: [0] })
+      .concat(Observable.of({ id: 0, keys: [0, 1] }).delay(200))
+      .concat(Observable.of({ id: 0, keys: [2] }).delay(200))
   )
     .subscribe(tapeResultObserver(t, RECYCLEJSON)(expectedResults));
 });
@@ -902,7 +1017,7 @@ test.skip('Should continue emitting after error emission', (t) => {
 });
 
 
-test('Emits errors to all requests when batched request returns an error', (t) => {
+test('Should emit errors to all requests when batched request returns an error', (t) => {
   t.plan(4);
   const dataSource = {
     get: () => Observable.timer(100)
@@ -922,8 +1037,8 @@ test('Emits errors to all requests when batched request returns an error', (t) =
     recycleJSON: RECYCLEJSON,
     onChange: graphChange
   })
-    .batch()
-    .boxValues()
+    // .batch()
+    // .boxValues()
     .treatErrorsAsValues();
     // TODO - why does this output a pathValue rather than a sentinel when treatErrorsAsValues() is not flagged
     // e.g. { id: 1, graphFragment: {}, graphFragmentStatus: 'error', error: [ { path: [ 'items', 1, 'title' ], value: { $type: 'error', value: { status: 500 } } } ] }
