@@ -137,7 +137,7 @@ npm run test:unit
 React Integration Testing
 
 ```bash
-npm run jest:integration
+npm run test:integration
 ```
 
 
