@@ -111,7 +111,7 @@ const mapDispatch = (dispatch, { newTodoLabel }) => ({
 const CreateNewTodoFormContainer = mapPropsStream(props$ => {
   const { handler: setInputFieldValue, stream: inputFieldValue$ } = createEventHandler();
 
-  props$
+  return props$
     .combineLatest(
       inputFieldValue$.startWith(''),
       (props, newTodoLabel) => ({ ...props, newTodoLabel })
