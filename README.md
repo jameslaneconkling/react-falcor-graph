@@ -111,7 +111,7 @@ const mapDispatch = (dispatch, { newTodoLabel }) => ({
 const CreateNewTodoFormContainer = mapPropsStream(props$ => {
   const { handler: setInputFieldValue, stream: inputFieldValue$ } = createEventHandler();
 
-  props$
+  return props$
     .combineLatest(
       inputFieldValue$.startWith(''),
       (props, newTodoLabel) => ({ ...props, newTodoLabel })
@@ -137,7 +137,7 @@ npm run test:unit
 React Integration Testing
 
 ```bash
-npm run jest:integration
+npm run test:integration
 ```
 
 
