@@ -1,3 +1,15 @@
+exports.mapHashMap = (predicate, hashMap) => {
+  let out = {};
+  let hashMapKeys = Object.keys(hashMap);
+
+  for (let i = 0; i < hashMapKeys.length; i++) {
+    out[hashMapKeys[i]] = predicate(hashMap[hashMapKeys[i]]);
+  }
+
+  return out;
+};
+
+
 const range = (from = 0, to) => {
   const list = [];
   while (from <= to) {
@@ -58,7 +70,7 @@ exports.isPaths = paths => {
     if (!Array.isArray(paths[i])) {
       return false;
     }
-
-    return true;
   }
+
+  return true;
 };
