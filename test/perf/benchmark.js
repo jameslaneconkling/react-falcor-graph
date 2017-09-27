@@ -8,16 +8,19 @@ require('rxjs/add/operator/take');
 const {
   Model
 } = require('@graphistry/falcor/dist/falcor.all.min');
-const { createFalcorModel } = require('../test-utils');
+const {
+  createFalcorModel,
+  createItemsCache
+} = require('../unit/test-utils');
 const { withGraphFragment } = require('../../src/');
 
 
 const createPerfTests = () => {
   const paths = ({ from, to }) => [['items', { from, to }, 'title']];
-  const { model, change$ } = createFalcorModel(Model, { recycleJSON: false });
+  const { model, change$ } = createFalcorModel(Model, { recycleJSON: false, cache: createItemsCache(200) });
 
-  const from = { 0: 0, 1: 50 };
-  const to = { 0: 49, 1: 99 };
+  const from = { 0: 0, 1: 99 };
+  const to = { 0: 100, 1: 199 };
   let id = 0;
 
   const innerConnect1 = withGraphFragment(paths, model, change$)(
@@ -56,10 +59,10 @@ const createPerfTests = () => {
 
 const createPerfTestsRecycled = () => {
   const paths = ({ from, to }) => [['items', { from, to }, 'title']];
-  const { model, change$ } = createFalcorModel(Model, { recycleJSON: true });
+  const { model, change$ } = createFalcorModel(Model, { recycleJSON: false, cache: createItemsCache(200) });
 
-  const from = { 0: 0, 1: 50 };
-  const to = { 0: 49, 1: 99 };
+  const from = { 0: 0, 1: 99 };
+  const to = { 0: 100, 1: 199 };
   let id = 0;
 
   const innerConnect1 = withGraphFragment(paths, model, change$)(

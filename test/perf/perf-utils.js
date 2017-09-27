@@ -33,6 +33,7 @@ const createPerfTests = exports.createPerfTests = ([head, ...rest]) => {
     head.body()
       // .do(({ t1, t2 }) => console.log(`\t${t2 - t1}ms`))
       .repeat(head.options && head.options.iterations || 500)
+      .skip(1)
       .reduce(({ runningSum, count }, { t1, t2 }) => ({
         runningSum: runningSum + (t2 - t1),
         count: count + 1
