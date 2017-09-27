@@ -9,6 +9,7 @@ require('rxjs/add/operator/concat');
 require('rxjs/add/operator/do');
 require('rxjs/add/operator/debounceTime');
 const { Model } = require('@graphistry/falcor/dist/falcor.all.min');
+// const { Model } = require('falcor');
 const {
   createEventHandler
 } = require('recompose');
@@ -189,7 +190,7 @@ test('Should emit progressively for query in local cache and remote service', (t
  * _and_ new paths that don't resolve.  Second case doesn't work in falcor
  * see: https://github.com/graphistry/falcor/issues/15
  */
-test('Should emit next when when path changes and new path partially resolves', (t) => {
+test('Should emit next when path changes and new path partially resolves', (t) => {
   t.plan(4);
   const {
     stream: change$,

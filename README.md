@@ -72,7 +72,9 @@ const PaginatedTodosListContainer = compose(
 
 ## Stream composition using `withFalcorGraph` and `withReduxStore`
 
-React Falcor also exposes `withFalcorGraph` and `withReduxStore` for interacting directly with a stream of props.  Paired with the `recompose/mapPropsStream` HOC, this approach composes observable streams, rather than components, reducing overhead from the creation of intermediary components.  For example, the above container (using `connect()`, `connectFalcor()`, and `mapProps()` HOCs), creates three components, while the following equivalent approach creates only one.
+React Falcor also exposes `withFalcorGraph`, `withReduxStore`, and other recompose-like helpers like `withHandlers`, `withState`, `withProps`.  Paired with the `recompose/mapPropsStream` HOC, this approach composes observable streams, rather than components, reducing overhead from the creation of intermediary components.  It's like recompose for streams!
+
+For example, the above container (using `connect()`, `connectFalcor()`, and `mapProps()` HOCs), creates three components, while the following equivalent approach creates only one.
 
 ```javascript
 const mapProps = state => ({
