@@ -4,6 +4,11 @@ const {
 require('rxjs/add/observable/from');
 require('rxjs/add/observable/of');
 require('rxjs/add/observable/empty');
+require('rxjs/add/observable/merge');
+require('rxjs/add/operator/first');
+require('rxjs/add/operator/skip');
+require('rxjs/add/operator/share');
+require('rxjs/add/operator/take');
 require('rxjs/add/operator/last');
 require('rxjs/add/operator/merge');
 require('rxjs/add/operator/concat');
@@ -75,20 +80,45 @@ exports.default = (
           model = _models[props.id];
         }
 
-        return Observable.from(model.get(..._paths).progressively())
-          .map((graphFragment) => {
-            const graphFragmentStatus = graphFragment.json.$__status === 'pending' ? 'next' : 'complete';
+        const graphQuery$ = Observable.from(model.get(..._paths).progressively());
 
-            return Object.assign({}, props, { graphFragment, graphFragmentStatus });
-          })
-          .catch((err, caught) => errorHandler(err, props, caught))
-          .let(graphQuery$ => graphQuery$
-            .merge(
-              Observable.of(Object.assign({}, props, { graphFragment: {}, graphFragmentStatus: 'next' }))
-            )
+        return Observable.merge(
+          graphQuery$
+            .skip(1)
+            .map((graphFragment) => {
+              const graphFragmentStatus = graphFragment.json && graphFragment.json.$__status === 'resolved' ? 'complete' : 'next';
+
+              return Object.assign({}, props, { graphFragment, graphFragmentStatus });
+            })
+            .catch((err, caught) => errorHandler(err, props, caught)),
+          graphQuery$
+            .take(1)
+            .merge(Observable.of({}))
+            .map((graphFragment) => {
+              const graphFragmentStatus = graphFragment.json && graphFragment.json.$__status === 'resolved' ? 'complete' : 'next';
+
+              return Object.assign({}, props, { graphFragment, graphFragmentStatus });
+            })
+            .catch(() => Observable.empty())
             .throttleTime(0)
-          )
+        )
           .repeatWhen(() => graphChange$);
+
+        // Netflix model implementation
+        // const graphQuery$ = Observable.from(model.get(..._paths).progressively());
+
+        // return Observable.merge(
+        //   graphQuery$
+        //     .startWith({})
+        //     .map(graphFragment => Object.assign({}, props, { graphFragment, graphFragmentStatus: 'next' }))
+        //     .catch((err, caught) => errorHandler(err, props, caught)),
+        //   graphQuery$
+        //     .last()
+        //     .catch(() => Observable.empty())
+        //     .map(graphFragment => Object.assign({}, props, { graphFragment, graphFragmentStatus: 'complete' }))
+        // )
+        //   .repeatWhen(() => graphChange$)
+        //   .auditTime(0); // audit time screws everything up: latency perf tests, input cursors jumping to end in input
       })
   );
 };
