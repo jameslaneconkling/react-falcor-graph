@@ -3,9 +3,13 @@ const {
   Observable
 } = require('rxjs/Observable');
 require('rxjs/add/observable/from');
-require('rxjs/add/operator/combineLatest');
+require('rxjs/add/observable/combineLatest');
 require('rxjs/add/operator/distinctUntilChanged');
-require('rxjs/add/operator/map');
+require('rxjs/add/operator/withLatestFrom');
+require('rxjs/add/operator/startWith');
+const {
+  mapValues
+} = require('./utils');
 
 
 /**
@@ -15,18 +19,7 @@ require('rxjs/add/operator/map');
  */
 const observableFromStore = exports.observableFromStore = store => ({
   subscribe: (observer) => {
-    let state = store.getState();
-
-    const unsubscribe = store.subscribe(() => {
-      const newState = store.getState();
-
-      if (newState !== state) {
-        state = newState;
-        observer.next(newState);
-      }
-    });
-
-    observer.next(state);
+    const unsubscribe = store.subscribe(() => observer.next(store.getState()));
 
     return { unsubscribe };
   },
@@ -42,7 +35,7 @@ const observableFromStore = exports.observableFromStore = store => ({
  *
  * @returns {Boolean}
  */
-const shallowEquals = exports.shallowEquals = (first, second) => {
+exports.shallowEquals = (first, second) => {
   if (first === second) {
     return true;
   }
@@ -63,28 +56,34 @@ const shallowEquals = exports.shallowEquals = (first, second) => {
   return true;
 };
 
+const strictEquals = exports.strictEquals = (first, second) => first === second;
+
 
 /**
  * @param {Object} store
  * @param {(state, props) -> props} mapState
- * @param {(dispatch, props) -> props} mapDispatch
+ * @param {{ [string]: (dispatch, props, state) => void }} dispatchHandlers
  *
  * @returns {Observable<props> -> Observable<props>}
  */
-exports.default = (store, mapState, mapDispatch) => props$ => {
-  const store$ = observableFromStore(store);
+exports.default = (store, mapState = state => state, dispatchHandlers = {}) => props$ => {
+  let _props;
+  let _stateSelection;
+  const cachedDispatchHandlers = mapValues(handler => (...args) => handler(store.dispatch, _props, _stateSelection)(...args), dispatchHandlers);
 
   // NOTE - how will this handle nested connected components?
   // see react-redux's approach: parent connected components update
   // state tree fully before children receive subscription update
-  return Observable.from(props$)
-    .combineLatest(
-      Observable.from(store$),
-      (props, state) => ([props, mapState(state, props)])
-    )
-    .distinctUntilChanged(([prevProps, prevStateProps], [props, stateProps]) =>
-      shallowEquals(prevProps, props) &&
-      shallowEquals(prevStateProps, stateProps)
-    )
-    .map(([props, stateProps]) => Object.assign({}, props, stateProps, mapDispatch(store.dispatch, props)));
+  return Observable.combineLatest(
+    Observable.from(props$),
+    Observable.from(observableFromStore(store))
+      .startWith(store.getState())
+      .distinctUntilChanged(strictEquals),
+    (props, state) => {
+      _props = props;
+      _stateSelection = mapState(state, props);
+
+      return Object.assign({}, props, _stateSelection, cachedDispatchHandlers);
+    }
+  );
 };

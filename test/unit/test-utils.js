@@ -15,6 +15,16 @@ const createItemsCache = exports.createItemsCache = (length) => ({
     ), {})
 });
 
+exports.once = (fn) => {
+  let notRun = true;
+  return (...args) => {
+    if (notRun) {
+      notRun = false;
+      return fn(...args);
+    }
+  };
+};
+
 exports.createFalcorModel = (
   Model, { recycleJSON = true, cache = createItemsCache(100) } = {}
 ) => {

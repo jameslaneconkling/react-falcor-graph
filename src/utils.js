@@ -1,4 +1,4 @@
-exports.mapHashMap = (predicate, hashMap) => {
+exports.mapValues = (predicate, hashMap) => {
   let out = {};
   let hashMapKeys = Object.keys(hashMap);
 
@@ -7,6 +7,33 @@ exports.mapHashMap = (predicate, hashMap) => {
   }
 
   return out;
+};
+
+
+exports.mapKeys = (predicate, hashMap) => Object.keys(hashMap)
+  .reduce((newHashMap, key) => {
+    newHashMap[predicate(key)] = hashMap[key];
+  }, {});
+
+
+exports.omit = (omitKeys, hash) => Object.keys(hash)
+  .reduce((newHash, key) => {
+    if (omitKeys.indexOf(key) === -1) {
+      newHash[key] = hash[key];
+    }
+
+    return newHash;
+  }, {});
+
+
+exports.compose = (...fns) => {
+  if (fns.length === 0) {
+    return args => args;
+  } else if (fns.length === 1) {
+    return fns[0];
+  }
+
+  return fns.reduce((a, b) => (...args) => a(b(...args)));
 };
 
 
@@ -23,16 +50,17 @@ const range = (from = 0, to) => {
 const expandPath = exports.expandPath = pathOrPathSet =>
   pathOrPathSet.reduce((paths, keyOrKeySet) => {
     if (Array.isArray(keyOrKeySet)) {
-    // keySet, e.g. ['name', 'age']
+      // keySet, e.g. ['name', 'age']
       return keyOrKeySet.reduce((expandedPaths, key) =>
         [...expandedPaths, ...paths.map(path => [...path, key])],
       []);
     } else if (typeof keyOrKeySet === 'object') {
-    // range, e.g. [{ from: 1, to: 3 }]
+      // range, e.g. [{ from: 1, to: 3 }]
       return range(keyOrKeySet.from, keyOrKeySet.to).reduce((expandedPaths, key) =>
         [...expandedPaths, ...paths.map(path => [...path, key])],
       []);
     }
+
     // key
     return paths.map(path => [...path, keyOrKeySet]);
   }, [[]]);
@@ -53,6 +81,7 @@ const walkTree = exports.walkTree = (path, tree, graph = tree) => {
   } else if (path[0] in tree) {
     return walkTree(path.slice(1), tree[path[0]], graph);
   }
+
   return undefined;
 };
 
@@ -73,15 +102,4 @@ exports.isPaths = paths => {
   }
 
   return true;
-};
-
-
-exports.compose = (...fns) => {
-  if (fns.length === 0) {
-    return args => args;
-  } else if (fns.length === 1) {
-    return fns[0];
-  }
-
-  return fns.reduce((a, b) => (...args) => a(b(...args)));
 };
