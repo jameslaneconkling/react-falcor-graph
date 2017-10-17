@@ -46,9 +46,9 @@ createPerfTests([
       const props$ = Observable.of({ id: 1, from: 0, to: 99 });
 
       return props$
-        .map(props => Object.assign(props, { t1: new Date() }))
+        .map(props => Object.assign(props, { t1: process.hrtime() }))
         .let(withGraphFragment(paths, model, Observable.empty()))
-        .map(props => Object.assign(props, { t2: new Date() }));
+        .map(props => Object.assign(props, { t2: process.hrtime() }));
     }
   },
   {
@@ -64,9 +64,9 @@ createPerfTests([
       const props$ = Observable.of({ id: 1, from: 0, to: 99 });
 
       return props$
-        .map(props => Object.assign(props, { t1: new Date() }))
+        .map(props => Object.assign(props, { t1: process.hrtime() }))
         .let(withGraphFragment(paths, model, Observable.empty()))
-        .map(props => Object.assign(props, { t2: new Date() }));
+        .map(props => Object.assign(props, { t2: process.hrtime() }));
     }
   },
   {
@@ -82,9 +82,9 @@ createPerfTests([
       const props$ = Observable.of({ id: 1, from: 0, to: 99 });
 
       return props$
-        .map(props => Object.assign(props, { t1: new Date() }))
+        .map(props => Object.assign(props, { t1: process.hrtime() }))
         .let(withGraphFragment(paths, model, Observable.empty()))
-        .map(props => Object.assign(props, { t2: new Date() }));
+        .map(props => Object.assign(props, { t2: process.hrtime() }));
     }
   },
   {
@@ -108,9 +108,9 @@ createPerfTests([
         });
 
       return props$
-        .map(props => Object.assign(props, { t1: new Date() }))
+        .map(props => Object.assign(props, { t1: process.hrtime() }))
         .let(withGraphFragment(paths, model, Observable.empty()))
-        .map(props => Object.assign(props, { t2: new Date() }));
+        .map(props => Object.assign(props, { t2: process.hrtime() }));
     }
   },
   {
@@ -134,9 +134,9 @@ createPerfTests([
         });
 
       return props$
-        .map(props => Object.assign(props, { t1: new Date() }))
+        .map(props => Object.assign(props, { t1: process.hrtime() }))
         .let(withGraphFragment(paths, model, Observable.empty()))
-        .map(props => Object.assign(props, { t2: new Date() }));
+        .map(props => Object.assign(props, { t2: process.hrtime() }));
     }
   },
   {
@@ -159,9 +159,9 @@ createPerfTests([
         });
 
       return props$
-        .map(props => Object.assign(props, { t1: new Date() }))
+        .map(props => Object.assign(props, { t1: process.hrtime() }))
         .let(withGraphFragment(paths, model, Observable.empty()))
-        .map(props => Object.assign(props, { t2: new Date() }));
+        .map(props => Object.assign(props, { t2: process.hrtime() }));
     }
   }
 ]);
